@@ -15,7 +15,6 @@ import Control.Applicative
 import Control.Monad (mzero)
 import Control.Monad.IO.Class (MonadIO)
 import Data.ByteString.Char8 (ByteString)
-import Data.Default (def)
 import Data.Text (Text)
 import Data.Typeable (Typeable)
 
@@ -29,21 +28,21 @@ import qualified Data.ByteString as B
 import qualified Data.Conduit as C
 import qualified Data.Conduit.Attoparsec as C
 import qualified Data.Conduit.List as CL
+import qualified Data.Conduit.Binary as CB
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import qualified Network.HTTP.Conduit as H
+import qualified Network.HTTP.Client as HC
 import qualified Network.HTTP.Types as HT
-
+import qualified Data.ByteString.Lazy as L
 #if DEBUG
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Text.Printf (printf)
-import qualified Data.ByteString.Lazy as L
 #endif
 
 
 import Facebook.Types
 import Facebook.Monad
-
 
 -- | A plain 'H.Request' to a Facebook API.  Use this instead of
 -- 'def' when creating new 'H.Request'@s@ for Facebook.
@@ -57,7 +56,7 @@ fbreq path mtoken query =
       let host = case tier of
                    Production -> "graph.facebook.com"
                    Beta ->  "graph.beta.facebook.com"
-      in def { H.secure        = True
+      in H.defaultRequest { H.secure        = True
              , H.host          = host
              , H.port          = 443
              , H.path          = TE.encodeUtf8 path
@@ -65,7 +64,7 @@ fbreq path mtoken query =
              , H.queryString   =
                  HT.renderSimpleQuery False $
                  maybe id tsq mtoken query
-             , H.responseTimeout = Just 120000000 -- 2 minutes
+             , H.responseTimeout = H.responseTimeoutMicro 120000000 -- 2 minutes
              }
 
 
@@ -153,7 +152,7 @@ fbhttpHelper :: (MonadBaseControl IO m, R.MonadResource m) =>
              -> H.Request
              -> m (H.Response (C.ResumableSource m ByteString))
 fbhttpHelper manager req = do
-  let req' = req { H.checkStatus = \_ _ _ -> Nothing }
+  let req' = req { H.checkResponse = \_ _ -> return () }
 #if DEBUG
   _ <- liftIO $ printf "fbhttp doing request\n\tmethod: %s\n\tsecure: %s\n\thost: %s\n\tport: %s\n\tpath: %s\n\tqueryString: %s\n\trequestHeaders: %s\n" (show $ H.method req') (show $ H.secure req') (show $ H.host req') (show $ H.port req') (show $ H.path req') (show $ H.queryString req') (show $ H.requestHeaders req')
 #endif
@@ -167,7 +166,10 @@ fbhttpHelper manager req = do
   if isOkay status
     then return response
     else do
-      let statusexc = H.StatusCodeException status headers cookies
+      fullResp <- H.responseBody response C.$$+- CB.sinkLbs
+      -- chunk <- HC.brReadSome (H.responseBody response) 1024
+      let res' = fmap (const ()) response
+      let statusexc = H.HttpExceptionRequest req $ H.StatusCodeException res' (L.toStrict fullResp)
       val <- E.try $ asJsonHelper response
       case val :: Either E.SomeException FacebookException of
         Right fbexc -> E.throw fbexc
@@ -200,7 +202,7 @@ httpCheck :: (MonadBaseControl IO m, R.MonadResource m) =>
 httpCheck req = runResourceInFb $ do
   manager <- getManager
   let req' = req { H.method      = HT.methodHead
-                 , H.checkStatus = \_ _ _ -> Nothing }
+                 , H.checkResponse = \_ _ -> return () }
   isOkay . H.responseStatus <$> lift (H.httpLbs req' manager)
   -- Yes, we use httpLbs above so that we don't have to worry
   -- about consuming the responseBody.  Note that the
