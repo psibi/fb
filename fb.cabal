@@ -76,7 +76,8 @@ library
     , resourcet
     , data-default
     , http-types
-    , http-conduit         >= 2.0     && < 2.2
+    , http-conduit         >= 2.0
+    , http-client
     , attoparsec           >= 0.10.4  && < 0.14
     , unordered-containers
     , aeson                >= 0.5
@@ -89,6 +90,7 @@ library
     , cryptohash           >= 0.7
     , cryptohash-cryptoapi == 0.1.*
     , monad-logger         >= 0.3
+    , conduit-extra
   if flag(conduit11)
     build-depends:
         conduit              >= 1.1   && < 1.3
@@ -128,7 +130,7 @@ test-suite runtests
     , data-default
     , HUnit
     , QuickCheck
-    , hspec >= 1.9 && < 1.12
+    , hspec
     , fb
   extensions:
     TypeFamilies
