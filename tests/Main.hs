@@ -220,10 +220,12 @@ facebookTests pretitle creds manager runAuth runNoAuth = do
                  fail "Pager had a next page but fetchNextPage didn't work."
        it "seems to work on a public list of comments" $
          do runAuth $
+            -- Postid: https://www.facebook.com/nytimes/posts/10150628170209999
+            -- Page id found using this technique: https://www.facebook.com/help/community/question/?id=529591157094317
               do token <- FB.getAppAccessToken
                  fetchNextPageWorks =<<
                    FB.getObject
-                     "/v2.8/135529993185189_397300340341485/comments"
+                     "/v2.8/5281959998_10150628170209999/comments"
                      []
                      (Just token)
        it "seems to work on a private list of app insights" $
