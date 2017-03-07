@@ -202,12 +202,6 @@ facebookTests pretitle creds manager runAuth runNoAuth = do
   --                FB.pagePhone page &?= Nothing
   --                FB.pageCheckins page &?= Nothing
   --                FB.pageWebsite page &?= Just "http://developers.facebook.com"
-  describe' "fqlQuery" $
-    do it "is able to query Facebook's page name from its page id" $
-         runNoAuth $
-         do r <-
-              FB.fqlQuery "SELECT name FROM page WHERE page_id = 20531316728" Nothing
-            FB.pagerData r &?= [PageName "Facebook"]
   describe' "listSubscriptions" $
     do it "returns something" $
          do runAuth $
