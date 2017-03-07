@@ -189,18 +189,19 @@ facebookTests pretitle creds manager runAuth runNoAuth = do
             val `shouldBe`
               ( Just "19292868552" :: Maybe Text
               , Just "Facebook for Developers" :: Maybe Text)
-  describe' "getPage" $
-    do it "works for FB Developers" $
-         do runNoAuth $
-              do page <- FB.getPage (FB.Id "19292868552") [] Nothing
-                 FB.pageId page &?= (FB.Id "19292868552")
-                 FB.pageName page &?= Just "Facebook Developers"
-                 FB.pageCategory page &?= Just "Product/service"
-                 FB.pageIsPublished page &?= Just True
-                 FB.pageCanPost page &?= Nothing
-                 FB.pagePhone page &?= Nothing
-                 FB.pageCheckins page &?= Nothing
-                 FB.pageWebsite page &?= Just "http://developers.facebook.com"
+  -- describe' "getPage" $
+  --   do it "works for FB Developers" $
+  --        do runAuth $
+  --             do token <- FB.getAppAccessToken
+  --                page <- FB.getPage (FB.Id "19292868552") [] (Just token)
+  --                FB.pageId page &?= (FB.Id "19292868552")
+  --                FB.pageName page &?= Just "Facebook for Developers"
+  --                FB.pageCategory page &?= Just "Product/service"
+  --                FB.pageIsPublished page &?= Just True
+  --                FB.pageCanPost page &?= Nothing
+  --                FB.pagePhone page &?= Nothing
+  --                FB.pageCheckins page &?= Nothing
+  --                FB.pageWebsite page &?= Just "http://developers.facebook.com"
   describe' "fqlQuery" $
     do it "is able to query Facebook's page name from its page id" $
          runNoAuth $
