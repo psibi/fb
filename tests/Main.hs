@@ -20,7 +20,7 @@ import Data.Word (Word, Word8, Word16, Word32, Word64)
 import System.Environment (getEnv)
 import System.Exit (exitFailure)
 import System.IO.Error (isDoesNotExistError)
-
+import Data.Monoid ((<>))
 import qualified Control.Exception.Lifted as E
 import qualified Control.Monad.Trans.Resource as R
 import qualified Data.Aeson as A
@@ -219,14 +219,21 @@ facebookTests pretitle creds manager runAuth runNoAuth = do
                not_ =
                  fail "Pager had a next page but fetchNextPage didn't work."
        it "seems to work on a public list of comments" $
-         do runNoAuth $
-              do fetchNextPageWorks =<<
-                   FB.getObject "/135529993185189_397300340341485/comments" [] Nothing
+         do runAuth $
+              do token <- FB.getAppAccessToken
+                 fetchNextPageWorks =<<
+                   FB.getObject
+                     "/v2.8/135529993185189_397300340341485/comments"
+                     []
+                     (Just token)
        it "seems to work on a private list of app insights" $
          do runAuth $
               do token <- FB.getAppAccessToken
                  fetchNextPageWorks =<<
-                   FB.getObject "/app/insights" [] (Just token)
+                   FB.getObject
+                     ("/v2.8/" <> FB.appId creds <> "/app_insights/api_calls")
+                     []
+                     (Just token)
   describe' "fetchNextPage/fetchPreviousPage" $
     do let backAndForthWorks :: FB.Pager A.Value
                              -> FB.FacebookT anyAuth (R.ResourceT IO) ()
@@ -284,13 +291,19 @@ facebookTests pretitle creds manager runAuth runNoAuth = do
                        }
                  -- Create the test user
                  newTestUser <- FB.createTestUser userInfo token
+                 liftIO $ print newTestUser
                  let newTestUserToken =
                        (M.fromJust $ FB.incompleteTestUserAccessToken newTestUser)
                  -- Get the created user
                  createdUser <-
                    FB.getUser (FB.tuId newTestUser) [] (Just newTestUserToken)
+                 liftIO $ print "b"
+                 liftIO $ print createdUser
                  -- Remove the test user
-                 True <- FB.removeTestUser newTestUser token
+                 removed <- FB.removeTestUser newTestUser token
+                 liftIO $ print "c"
+                 liftIO $ print removed
+                 removed &?= True
                  -- Check user attributes
                  FB.userId createdUser &?= FB.tuId newTestUser
                  FB.userName createdUser &?= Just "Gabriel"
