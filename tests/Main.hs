@@ -240,9 +240,12 @@ facebookTests pretitle creds manager runAuth runNoAuth = do
     do let backAndForthWorks :: FB.Pager A.Value
                              -> FB.FacebookT anyAuth (R.ResourceT IO) ()
            backAndForthWorks pager = do
-             Just pager2 <- FB.fetchNextPage pager
-             Just pager3 <- FB.fetchPreviousPage pager2
-             pager3 &?= pager
+             pager2 <- FB.fetchNextPage pager
+             case pager2 of
+               Nothing -> True &?= True
+               Just pager2' -> do
+                 Just pager3 <- FB.fetchPreviousPage pager2'
+                 pager3 &?= pager2'
        it "seems to work on a public list of comments" $
          do runAuth $
               do token <- FB.getAppAccessToken
@@ -255,7 +258,10 @@ facebookTests pretitle creds manager runAuth runNoAuth = do
          do runAuth $
               do token <- FB.getAppAccessToken
                  backAndForthWorks =<<
-                   FB.getObject "/app/insights" [] (Just token)
+                   FB.getObject
+                     ("/v2.8/" <> FB.appId creds <> "/app_insights/api_calls")
+                     []
+                     (Just token)
   describe' "fetchAllNextPages" $
     do let hasAtLeast :: C.Source IO A.Value -> Int -> IO ()
            src `hasAtLeast` n = src C.$$ go n
@@ -266,15 +272,23 @@ facebookTests pretitle creds manager runAuth runNoAuth = do
                  fail $
                  "Source does not have at least " ++ show n ++ " elements."
        it "seems to work on a public list of comments" $
-         do runNoAuth $
-              do pager <-
-                   FB.getObject "/135529993185189_397300340341485/comments" [] Nothing
+         do runAuth $
+              do token <- FB.getAppAccessToken
+                 pager <-
+                   FB.getObject
+                     "/v2.8/5281959998_10150628170209999/comments"
+                     []
+                     (Just token)
                  src <- FB.fetchAllNextPages pager
                  liftIO $ src `hasAtLeast` 200 -- items
        it "seems to work on a private list of app insights" $
          do runAuth $
               do token <- FB.getAppAccessToken
-                 pager <- FB.getObject "/app/insights" [] (Just token)
+                 pager <-
+                   FB.getObject
+                     ("/v2.8/" <> FB.appId creds <> "/app_insights/api_calls")
+                     []
+                     (Just token)
                  src <- FB.fetchAllNextPages pager
                  let firstPageElms = length (FB.pagerData pager)
                      hasNextPage = isJust (FB.pagerNext pager)
