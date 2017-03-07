@@ -244,9 +244,13 @@ facebookTests pretitle creds manager runAuth runNoAuth = do
              Just pager3 <- FB.fetchPreviousPage pager2
              pager3 &?= pager
        it "seems to work on a public list of comments" $
-         do runNoAuth $
-              do backAndForthWorks =<<
-                   FB.getObject "/135529993185189_397300340341485/comments" [] Nothing
+         do runAuth $
+              do token <- FB.getAppAccessToken
+                 backAndForthWorks =<<
+                   FB.getObject
+                     "/v2.8/5281959998_10150628170209999/comments"
+                     []
+                     (Just token)
        it "seems to work on a private list of app insights" $
          do runAuth $
               do token <- FB.getAppAccessToken
