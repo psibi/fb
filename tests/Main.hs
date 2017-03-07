@@ -189,16 +189,6 @@ facebookTests pretitle creds manager runAuth runNoAuth = do
             val `shouldBe`
               ( Just "19292868552" :: Maybe Text
               , Just "Facebook for Developers" :: Maybe Text)
-  describe' "getUser" $
-    do it "works for Zuckerberg" $
-         do runNoAuth $
-              do user <- FB.getUser (FB.Id "zuck") [] Nothing
-                 FB.userId user &?= FB.Id "4"
-                 FB.userName user &?= Just "Mark Zuckerberg"
-                 FB.userFirstName user &?= Just "Mark"
-                 FB.userMiddleName user &?= Nothing
-                 FB.userLastName user &?= Just "Zuckerberg"
-                 FB.userGender user &?= Just FB.Male
   describe' "getPage" $
     do it "works for FB Developers" $
          do runNoAuth $
