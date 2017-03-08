@@ -245,7 +245,7 @@ facebookTests pretitle creds manager runAuth runNoAuth = do
                Nothing -> True &?= True
                Just pager2' -> do
                  Just pager3 <- FB.fetchPreviousPage pager2'
-                 pager3 &?= pager2'
+                 pager3 &?= pager
        it "seems to work on a public list of comments" $
          do runAuth $
               do token <- FB.getAppAccessToken
