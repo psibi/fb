@@ -276,7 +276,7 @@ facebookTests pretitle creds manager runAuth runNoAuth = do
               do token <- FB.getAppAccessToken
                  pager <-
                    FB.getObject
-                     "/v2.8/5281959998_10150628170209999/comments"
+                     "/v2.8/63441126719_10154249531391720/comments"
                      []
                      (Just token)
                  src <- FB.fetchAllNextPages pager
@@ -311,18 +311,14 @@ facebookTests pretitle creds manager runAuth runNoAuth = do
                        }
                  -- Create the test user
                  newTestUser <- FB.createTestUser userInfo token
-                 liftIO $ print newTestUser
                  let newTestUserToken =
                        (M.fromJust $ FB.incompleteTestUserAccessToken newTestUser)
                  -- Get the created user
                  createdUser <-
                    FB.getUser (FB.tuId newTestUser) [] (Just newTestUserToken)
-                 liftIO $ print "b"
                  liftIO $ print createdUser
                  -- Remove the test user
                  removed <- FB.removeTestUser newTestUser token
-                 liftIO $ print "c"
-                 liftIO $ print removed
                  removed &?= True
                  -- Check user attributes
                  FB.userId createdUser &?= FB.tuId newTestUser
