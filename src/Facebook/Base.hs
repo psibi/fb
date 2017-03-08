@@ -23,7 +23,7 @@ import Control.Monad.Trans.Class (MonadTrans)
 import Control.Monad.Trans.Control (MonadBaseControl)
 import qualified Control.Monad.Trans.Resource as R
 import qualified Data.Aeson as A
-import qualified Data.Attoparsec.Char8 as AT
+import qualified Data.Attoparsec.ByteString.Char8 as AT
 import qualified Data.ByteString as B
 import qualified Data.Conduit as C
 import qualified Data.Conduit.Attoparsec as C
@@ -32,7 +32,6 @@ import qualified Data.Conduit.Binary as CB
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import qualified Network.HTTP.Conduit as H
-import qualified Network.HTTP.Client as HC
 import qualified Network.HTTP.Types as HT
 import qualified Data.ByteString.Lazy as L
 #if DEBUG
@@ -159,7 +158,6 @@ fbhttpHelper manager req = do
   response <- H.http req' manager
   let status  = H.responseStatus    response
       headers = H.responseHeaders   response
-      cookies = H.responseCookieJar response
 #if DEBUG
   _ <- liftIO $ printf "fbhttp response status: %s\n" (show status)
 #endif
@@ -167,7 +165,6 @@ fbhttpHelper manager req = do
     then return response
     else do
       fullResp <- H.responseBody response C.$$+- CB.sinkLbs
-      -- chunk <- HC.brReadSome (H.responseBody response) 1024
       let res' = fmap (const ()) response
       let statusexc = H.HttpExceptionRequest req $ H.StatusCodeException res' (L.toStrict fullResp)
       val <- E.try $ asJsonHelper response

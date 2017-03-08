@@ -21,7 +21,6 @@ import Data.Text
 import Data.Text.Encoding (encodeUtf8)
 import Data.Time (UTCTime(..), Day(..))
 import Data.Typeable (Typeable)
-import Control.Monad.IO.Class (liftIO)
 import Data.Aeson
 import Data.Aeson.Types
 
@@ -133,13 +132,10 @@ removeTestUser
   -> AppAccessToken -- ^ Access token for your app (ignored since fb 0.14.7).
   -> FacebookT Auth m Bool
 removeTestUser testUser _token = do
-  creds <- getCreds
   getObjectBool
     ("/v2.8/" <> (idCode $ tuId testUser))
     [("method", "delete")]
     (Just _token)
-  where
-    token = incompleteTestUserAccessToken testUser
 
 -- | Make a friend connection between two test users.
 --

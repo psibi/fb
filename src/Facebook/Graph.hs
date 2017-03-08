@@ -14,7 +14,6 @@ module Facebook.Graph
   , Tag(..)
   ) where
 
-import Control.Applicative
 import Control.Monad (mzero)
 import Control.Monad.Trans.Control (MonadBaseControl)
 import Data.ByteString.Char8 (ByteString)
