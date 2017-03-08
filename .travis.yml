@@ -7,7 +7,7 @@ cache:
   - "$HOME/.stack"
 env:
   global:
-    APP_ID: "'Haskell Library Test APP'"
+    APP_NAME: "'Haskell Library Test APP'"
 matrix:
   include:
   - env: BUILD=cabal GHCVER=7.8.4 CABALVER=1.18 HAPPYVER=1.19.5 ALEXVER=3.1.7
