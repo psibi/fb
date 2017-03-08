@@ -5,6 +5,7 @@ module Facebook.TestUsers
   , CreateTestUser(..)
   , CreateTestUserInstalled(..)
   , getTestUsers
+  , disassociateTestuser
   , removeTestUser
   , createTestUser
   , makeFriendConn
@@ -14,11 +15,15 @@ module Facebook.TestUsers
 import Control.Applicative ((<$>), (<*>))
 import Control.Monad (unless, mzero)
 import Control.Monad.Trans.Control (MonadBaseControl)
+import Data.ByteString.Lazy (fromStrict)
 import Data.Default
 import Data.Text
 import Data.Text.Encoding (encodeUtf8)
 import Data.Time (UTCTime(..), Day(..))
 import Data.Typeable (Typeable)
+import Control.Monad.IO.Class (liftIO)
+import Data.Aeson
+import Data.Aeson.Types
 
 import qualified Control.Exception.Lifted as E
 import qualified Control.Monad.Trans.Resource as R
@@ -111,6 +116,16 @@ getTestUsers token = do
   creds <- getCreds
   getObject ("/" <> appId creds <> "/accounts/test-users") [] (Just token)
 
+disassociateTestuser
+  :: (MonadBaseControl IO m, R.MonadResource m)
+  => TestUser -> AppAccessToken -> FacebookT Auth m Bool
+disassociateTestuser testUser _token = do
+  creds <- getCreds
+  getObjectBool
+    ("/v2.8/" <> (appId creds) <> "/accounts/test-users")
+    [("uid", encodeUtf8 $ idCode $ tuId testUser), ("method", "delete")]
+    (Just _token)
+
 -- | Remove an existing test user.
 removeTestUser
   :: (R.MonadResource m, MonadBaseControl IO m)
@@ -183,5 +198,20 @@ getObjectBool
   -> FacebookT anyAuth m Bool
 getObjectBool path query mtoken =
   runResourceInFb $
-  do bs <- asBS =<< fbhttp =<< fbreq path mtoken query
-     return (bs == "true")
+  do req <- fbreq path mtoken query
+     response <- fbhttp req
+     bs <- asBS response
+     let respJson :: Maybe Value = decode (fromStrict bs)
+     maybe
+       (return False)
+       (\val -> maybe (return False) return (parseMaybe isTrue val))
+       respJson
+  where
+    isTrue :: Value -> Parser Bool
+    isTrue val =
+      withObject
+        "success"
+        (\obj -> do
+           (status :: Bool) <- obj .: "success"
+           return status)
+        val
