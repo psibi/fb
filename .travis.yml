@@ -10,7 +10,7 @@ env:
     APP_NAME: "'Haskell Library Test APP'"
 matrix:
   include:
-  - env: BUILD=cabal GHCVER=7.8.4 CABALVER=1.18 HAPPYVER=1.19.5 ALEXVER=3.1.7
+  - env: BUILD=cabal GHCVER=7.8.4 CABALVER=1.18 HAPPYVER=1.19.5 ALEXVER=3.1.7 RUN_TESTS=
     compiler: ": #GHC 7.8.4"
     addons:
       apt:
@@ -21,7 +21,16 @@ matrix:
         - alex-3.1.7
         sources:
         - hvr-ghc
-  - env: BUILD=cabal GHCVER=7.10.3 CABALVER=1.22 HAPPYVER=1.19.5 ALEXVER=3.1.7
+  - env: BUILD=stack ARGS="--resolver lts-2.22"
+    compiler: ": #stack 7.8.4"
+    addons:
+      apt:
+        packages:
+        - libgmp-dev
+  - env: BUILD=stack ARGS="--resolver lts-2.22"
+    compiler: ": #stack 7.8.4 osx"
+    os: osx
+  - env: BUILD=cabal GHCVER=7.10.3 CABALVER=1.22 HAPPYVER=1.19.5 ALEXVER=3.1.7 RUN_TESTS=--run-tests
     compiler: ": #GHC 7.10.3"
     addons:
       apt:
@@ -32,7 +41,16 @@ matrix:
         - alex-3.1.7
         sources:
         - hvr-ghc
-  - env: BUILD=cabal GHCVER=8.0.2 CABALVER=1.24 HAPPYVER=1.19.5 ALEXVER=3.1.7
+  - env: BUILD=stack ARGS="--resolver lts-6"
+    compiler: ": #stack 7.10.3"
+    addons:
+      apt:
+        packages:
+        - libgmp-dev
+  - env: BUILD=stack ARGS="--resolver lts-6"
+    compiler: ": #stack 7.10.3 osx"
+    os: osx
+  - env: BUILD=cabal GHCVER=8.0.2 CABALVER=1.24 HAPPYVER=1.19.5 ALEXVER=3.1.7 RUN_TESTS=--run-tests
     compiler: ": #GHC 8.0.2"
     addons:
       apt:
@@ -43,7 +61,25 @@ matrix:
         - alex-3.1.7
         sources:
         - hvr-ghc
-  - env: BUILD=cabal GHCVER=head  CABALVER=head HAPPYVER=1.19.5 ALEXVER=3.1.7
+  - env: BUILD=stack ARGS="--resolver lts-8.3"
+    compiler: ": #stack 8.0.2"
+    addons:
+      apt:
+        packages:
+        - libgmp-dev
+  - env: BUILD=stack ARGS="--resolver lts-8.3"
+    compiler: ": #stack 8.0.2 osx"
+    os: osx
+  - env: BUILD=stack ARGS=""
+    compiler: ": #stack default"
+    addons:
+      apt:
+        packages:
+        - libgmp-dev
+  - env: BUILD=stack ARGS=""
+    compiler: ": #stack default osx"
+    os: osx
+  - env: BUILD=cabal GHCVER=head  CABALVER=head HAPPYVER=1.19.5 ALEXVER=3.1.7 RUN_TESTS=--run-tests
     compiler: ": #GHC HEAD"
     addons:
       apt:
@@ -54,39 +90,12 @@ matrix:
         - alex-3.1.7
         sources:
         - hvr-ghc
-  - env: BUILD=stack ARGS=""
-    compiler: ": #stack default"
-    addons:
-      apt:
-        packages:
-        - libgmp-dev
-  - env: BUILD=stack ARGS="--resolver lts-6"
-    compiler: ": #stack 7.10.3"
-    addons:
-      apt:
-        packages:
-        - libgmp-dev
-  - env: BUILD=stack ARGS="--resolver lts-8.3"
-    compiler: ": #stack 8.0.2"
-    addons:
-      apt:
-        packages:
-        - libgmp-dev
   - env: BUILD=stack ARGS="--resolver nightly"
     compiler: ": #stack nightly"
     addons:
       apt:
         packages:
         - libgmp-dev
-  - env: BUILD=stack ARGS=""
-    compiler: ": #stack default osx"
-    os: osx
-  - env: BUILD=stack ARGS="--resolver lts-6"
-    compiler: ": #stack 7.10.3 osx"
-    os: osx
-  - env: BUILD=stack ARGS="--resolver lts-8.3"
-    compiler: ": #stack 8.0.2 osx"
-    os: osx
   - env: BUILD=stack ARGS="--resolver nightly"
     compiler: ": #stack nightly osx"
     os: osx
@@ -152,7 +161,7 @@ script:
       stack --no-terminal $ARGS test --bench --no-run-benchmarks
       ;;
     cabal)
-      cabal install --enable-tests --enable-benchmarks --force-reinstalls --ghc-options=-O0 --reorder-goals --max-backjumps=-1 $CABALARGS $PACKAGES
+      cabal install --enable-tests $RUN_TESTS --enable-benchmarks --force-reinstalls --ghc-options=-O0 --reorder-goals --max-backjumps=-1 $CABALARGS $PACKAGES
 
       ORIGDIR=$(pwd)
       for dir in $PACKAGES
