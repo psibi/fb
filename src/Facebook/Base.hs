@@ -67,7 +67,11 @@ fbreq path mtoken query =
              , H.queryString   =
                  HT.renderSimpleQuery False $
                  maybe id tsq mtoken query
+#if MIN_VERSION_http_client(0,5,0)
              , H.responseTimeout = H.responseTimeoutMicro 120000000 -- 2 minutes
+#else
+             , H.responseTimeout = Just 120000000 -- 2 minutes
+#endif
              }
 #else
       in def { H.secure        = True
