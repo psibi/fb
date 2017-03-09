@@ -27,13 +27,14 @@ import Data.Int (Int64)
 import Data.Monoid (Monoid, mappend)
 import Data.String (IsString)
 import Data.Text (Text)
-import Data.Time (UTCTime, parseTimeM)
+import Data.Time (UTCTime)
 import Data.Time.Clock.POSIX (posixSecondsToUTCTime)
 import Data.Typeable (Typeable)
 #if MIN_VERSION_time(1,5,0)
-import Data.Time (defaultTimeLocale)
+import Data.Time (defaultTimeLocale, parseTimeM)
 #else
 import System.Locale (defaultTimeLocale)
+import Data.Time (parseTime)
 #endif
 import qualified Data.Aeson as A
 import qualified Data.Aeson.Types as A
@@ -214,7 +215,11 @@ newtype FbUTCTime = FbUTCTime
 
 instance A.FromJSON FbUTCTime where
   parseJSON (A.String t) =
+#if MIN_VERSION_time(1,5,0)
     case parseTimeM True defaultTimeLocale "%FT%T%z" (T.unpack t) of
+#else
+    case parseTime defaultTimeLocale "%FT%T%z" (T.unpack t) of
+#endif
       Just d -> return (FbUTCTime d)
       _ -> fail $ "could not parse FbUTCTime string " ++ show t
   parseJSON (A.Number n) =

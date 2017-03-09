@@ -34,6 +34,9 @@ import qualified Data.Text.Encoding as TE
 import qualified Network.HTTP.Conduit as H
 import qualified Network.HTTP.Types as HT
 import qualified Data.ByteString.Lazy as L
+#if !MIN_VERSION_http_client(0,4,30)
+import Data.Default (def)
+#endif
 #if DEBUG
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Text.Printf (printf)
@@ -55,6 +58,7 @@ fbreq path mtoken query =
       let host = case tier of
                    Production -> "graph.facebook.com"
                    Beta ->  "graph.beta.facebook.com"
+#if MIN_VERSION_http_client(0,4,30)
       in H.defaultRequest { H.secure        = True
              , H.host          = host
              , H.port          = 443
@@ -65,6 +69,18 @@ fbreq path mtoken query =
                  maybe id tsq mtoken query
              , H.responseTimeout = H.responseTimeoutMicro 120000000 -- 2 minutes
              }
+#else
+      in def { H.secure        = True
+             , H.host          = host
+             , H.port          = 443
+             , H.path          = TE.encodeUtf8 path
+             , H.redirectCount = 3
+             , H.queryString   =
+                 HT.renderSimpleQuery False $
+                 maybe id tsq mtoken query
+             , H.responseTimeout = Just 120000000 -- 2 minutes
+             }
+#endif
 
 
 -- | Internal class for types that may be passed on queries to
@@ -151,7 +167,11 @@ fbhttpHelper :: (MonadBaseControl IO m, R.MonadResource m) =>
              -> H.Request
              -> m (H.Response (C.ResumableSource m ByteString))
 fbhttpHelper manager req = do
+#if MIN_VERSION_http_client(0,5,0)
   let req' = req { H.checkResponse = \_ _ -> return () }
+#else
+  let req' = req { H.checkStatus = \_ _ _ -> Nothing }
+#endif
 #if DEBUG
   _ <- liftIO $ printf "fbhttp doing request\n\tmethod: %s\n\tsecure: %s\n\thost: %s\n\tport: %s\n\tpath: %s\n\tqueryString: %s\n\trequestHeaders: %s\n" (show $ H.method req') (show $ H.secure req') (show $ H.host req') (show $ H.port req') (show $ H.path req') (show $ H.queryString req') (show $ H.requestHeaders req')
 #endif
@@ -164,9 +184,15 @@ fbhttpHelper manager req = do
   if isOkay status
     then return response
     else do
+#if MIN_VERSION_http_client(0,5,0)
       fullResp <- H.responseBody response C.$$+- CB.sinkLbs
       let res' = fmap (const ()) response
       let statusexc = H.HttpExceptionRequest req $ H.StatusCodeException res' (L.toStrict fullResp)
+#else
+      let cookies = H.responseCookieJar response
+      let statusexc = H.StatusCodeException status headers cookies
+#endif
+
       val <- E.try $ asJsonHelper response
       case val :: Either E.SomeException FacebookException of
         Right fbexc -> E.throw fbexc
@@ -199,7 +225,12 @@ httpCheck :: (MonadBaseControl IO m, R.MonadResource m) =>
 httpCheck req = runResourceInFb $ do
   manager <- getManager
   let req' = req { H.method      = HT.methodHead
-                 , H.checkResponse = \_ _ -> return () }
+#if MIN_VERSION_http_client(0,5,0)
+     , H.checkResponse = \_ _ -> return ()
+#else
+     , H.checkStatus = \_ _ _ -> Nothing
+#endif
+  }
   isOkay . H.responseStatus <$> lift (H.httpLbs req' manager)
   -- Yes, we use httpLbs above so that we don't have to worry
   -- about consuming the responseBody.  Note that the

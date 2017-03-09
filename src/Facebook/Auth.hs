@@ -16,7 +16,9 @@ module Facebook.Auth
   , debugToken
   , DebugToken(..)
   ) where
-
+#if __GLASGOW_HASKELL__ <= 784
+import Control.Applicative
+#endif
 import Control.Monad (guard, join, liftM, mzero)
 import Control.Monad.IO.Class (MonadIO(liftIO))
 import Control.Monad.Trans.Control (MonadBaseControl)

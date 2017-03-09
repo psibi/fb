@@ -7,7 +7,9 @@ module Facebook.Object.FriendList
   , getUserFriendLists
   , getFriendListMembers
   ) where
-
+#if __GLASGOW_HASKELL__ <= 784
+import Control.Applicative
+#endif
 import Control.Monad (mzero)
 import Control.Monad.Trans.Control (MonadBaseControl)
 import Data.Aeson ((.:))

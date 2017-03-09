@@ -13,7 +13,9 @@ module Facebook.Graph
   , GeoCoordinates(..)
   , Tag(..)
   ) where
-
+#if __GLASGOW_HASKELL__ <= 784
+import Control.Applicative
+#endif
 import Control.Monad (mzero)
 import Control.Monad.Trans.Control (MonadBaseControl)
 import Data.ByteString.Char8 (ByteString)
@@ -29,7 +31,11 @@ import System.Locale (defaultTimeLocale)
 #endif
 import qualified Control.Monad.Trans.Resource as R
 import qualified Data.Aeson as A
+#if MIN_VERSION_aeson(1,0,0)
 import Data.Aeson.Text (encodeToTextBuilder)
+#else
+import Data.Aeson.Encode (encodeToTextBuilder)
+#endif
 import qualified Data.ByteString.Char8 as B
 import qualified Data.Text.Encoding as TE
 import qualified Data.Text.Lazy as TL

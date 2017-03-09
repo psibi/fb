@@ -1,5 +1,5 @@
 {-# LANGUAGE ConstraintKinds, DeriveDataTypeable, FlexibleContexts,
-  OverloadedStrings #-}
+  OverloadedStrings#-}
 
 module Facebook.Pager
   ( Pager(..)
@@ -8,7 +8,9 @@ module Facebook.Pager
   , fetchAllNextPages
   , fetchAllPreviousPages
   ) where
-
+#if __GLASGOW_HASKELL__ <= 784
+import Control.Applicative
+#endif
 import Control.Monad (mzero)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Trans.Control (MonadBaseControl)
@@ -85,7 +87,11 @@ fetchHelper pagerRef pager =
   case pagerRef pager of
     Nothing -> return Nothing
     Just url -> do
+#if MIN_VERSION_http_client(0,4,30)
       req <- liftIO (H.parseRequest url)
+#else
+      req <- liftIO (H.parseUrl url)
+#endif
       Just <$>
         (asJson =<<
          fbhttp
@@ -120,7 +126,11 @@ fetchAllHelper pagerRef pager = do
   let go (x:xs) mnext = C.yield x >> go xs mnext
       go [] Nothing = return ()
       go [] (Just next) = do
+#if MIN_VERSION_http_client(0,4,30)
         req <- liftIO (H.parseRequest next)
+#else
+        req <- liftIO (H.parseUrl next)
+#endif
         let get =
               fbhttpHelper
                 manager

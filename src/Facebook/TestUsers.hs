@@ -151,13 +151,11 @@ makeFriendConn
 makeFriendConn (TestUser {tuAccessToken = Nothing}) _ =
   E.throw $
   FbLibraryException
-    "The test user passed on the first argument doesn't have\
-                     \ a token. Both users must have a token."
+    "The test user passed on the first argument doesn't have a token. Both users must have a token."
 makeFriendConn _ (TestUser {tuAccessToken = Nothing}) =
   E.throw $
   FbLibraryException
-    "The test user passed on the second argument doesn't have\
-                     \ a token. Both users must have a token."
+    "The test user passed on the second argument doesn't have a token. Both users must have a token."
 makeFriendConn (TestUser {tuId = id1
                          ,tuAccessToken = (Just token1)}) (TestUser {tuId = id2
                                                                     ,tuAccessToken = (Just token2)}) = do
