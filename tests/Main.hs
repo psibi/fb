@@ -367,7 +367,7 @@ facebookTests pretitle creds manager runAuth runNoAuth = do
                      newList <- FB.pagerData <$> FB.getTestUsers token
                      let newList' = map FB.tuId newList
                          oldList' = map FB.tuId oldList
-                     (newList' \\ oldList') &?= [FB.tuId testUser]
+                     ((FB.tuId testUser) `elem` (newList' \\ oldList')) &?= True
 
 newtype PageName =
   PageName Text
