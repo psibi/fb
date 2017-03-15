@@ -41,6 +41,7 @@ import qualified Data.Aeson.Types as AE
 import qualified Data.Attoparsec.ByteString.Char8 as AB
 import qualified Data.Attoparsec.Text as A
 import qualified Data.ByteString as B
+import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Base64.URL as Base64URL
 import qualified Data.ByteString.Char8 as B8
 import qualified Data.Conduit as C
@@ -60,6 +61,7 @@ import Facebook.Monad
 
 -- | Get an app access token from Facebook using your
 -- credentials.
+-- Ref: https://developers.facebook.com/docs/facebook-login/manually-build-a-login-flow
 getAppAccessToken
   :: (R.MonadResource m, MonadBaseControl IO m)
   => FacebookT Auth m AppAccessToken
@@ -70,9 +72,7 @@ getAppAccessToken =
        fbreq "/oauth/access_token" Nothing $
        tsq creds [("grant_type", "client_credentials")]
      response <- fbhttp req
-     lift $
-       H.responseBody response C.$$+- CT.decode CT.utf8 C.=$
-       C.sinkParser (AppAccessToken <$ A.string "access_token=" <*> A.takeText)
+     asJson response
 
 -- | The first step to get an user access token.  Returns the
 -- Facebook URL you should redirect you user to.  Facebook will
@@ -87,8 +87,12 @@ getUserAccessTokenStep1 redirectUrl perms = do
     \tier ->
        let urlBase =
              case tier of
-               Production -> "https://www.facebook.com/dialog/oauth?client_id="
-               Beta -> "https://www.beta.facebook.com/dialog/oauth?client_id="
+               Production ->
+                 "https://www.facebook.com/" <> apiVersion <>
+                 "/dialog/oauth?client_id="
+               Beta ->
+                 "https://www.beta.facebook.com/" <> apiVersion <>
+                 "/dialog/oauth?client_id="
        in T.concat $
           urlBase :
           appId creds :
