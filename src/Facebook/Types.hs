@@ -180,7 +180,7 @@ instance ParseAccessToken UserKind where
     UserAccessToken <$> v A..: "id" <*> v A..: "token" <*> v A..: "expires"
 
 instance ParseAccessToken AppKind where
-  parseTokenJSON v = checkKind v "app" $ AppAccessToken <$> v A..: "token"
+  parseTokenJSON v = AppAccessToken <$> v A..: "access_token"
 
 -- | (Internal) Used to implement 'parseTokenJSON'.
 checkKind :: A.Object -> Text -> A.Parser a -> A.Parser a
