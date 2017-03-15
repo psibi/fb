@@ -65,7 +65,7 @@ getPage
   -> [Argument] -- ^ Arguments to be passed to Facebook
   -> Maybe UserAccessToken -- ^ Optional user access token
   -> FacebookT anyAuth m Page
-getPage id_ = getObject $ "/v2.8/" <> idCode id_
+getPage id_ = getObject $ idCode id_
 
 -- | Get a page using its ID. The user access token is optional.
 getPage_
@@ -74,7 +74,7 @@ getPage_
   -> [Argument] -- ^ Arguments to be passed to Facebook
   -> Maybe AppAccessToken -- ^ Optional user access token
   -> FacebookT anyAuth m Page
-getPage_ id_ = getObject $ "/v2.8/" <> idCode id_
+getPage_ id_ = getObject $ idCode id_
 
 -- | Search pages by keyword. The user access token is optional.
 searchPages

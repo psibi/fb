@@ -101,10 +101,7 @@ createTestUser
 createTestUser userInfo token = do
   creds <- getCreds
   let query = ("method", "post") : createTestUserQueryArgs userInfo
-  getObject
-    ("/v2.8/" <> appId creds <> "/accounts/test-users")
-    query
-    (Just token)
+  getObject (appId creds <> "/accounts/test-users") query (Just token)
 
 -- | Get a list of test users.
 getTestUsers
@@ -121,7 +118,7 @@ disassociateTestuser
 disassociateTestuser testUser _token = do
   creds <- getCreds
   getObjectBool
-    ("/v2.8/" <> (appId creds) <> "/accounts/test-users")
+    ((appId creds) <> "/accounts/test-users")
     [("uid", encodeUtf8 $ idCode $ tuId testUser), ("method", "delete")]
     (Just _token)
 
@@ -132,10 +129,7 @@ removeTestUser
   -> AppAccessToken -- ^ Access token for your app (ignored since fb 0.14.7).
   -> FacebookT Auth m Bool
 removeTestUser testUser _token = do
-  getObjectBool
-    ("/v2.8/" <> (idCode $ tuId testUser))
-    [("method", "delete")]
-    (Just _token)
+  getObjectBool (idCode $ tuId testUser) [("method", "delete")] (Just _token)
 
 -- | Make a friend connection between two test users.
 --
