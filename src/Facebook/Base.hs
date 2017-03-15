@@ -9,6 +9,7 @@ module Facebook.Base
     , fbhttp
     , fbhttpHelper
     , httpCheck
+    , apiVersion
     ) where
 
 import Control.Applicative
@@ -46,6 +47,9 @@ import Text.Printf (printf)
 import Facebook.Types
 import Facebook.Monad
 
+apiVersion :: Text
+apiVersion = "v2.8"
+
 -- | A plain 'H.Request' to a Facebook API.  Use this instead of
 -- 'def' when creating new 'H.Request'@s@ for Facebook.
 fbreq :: Monad m =>
@@ -62,7 +66,7 @@ fbreq path mtoken query =
       in H.defaultRequest { H.secure        = True
              , H.host          = host
              , H.port          = 443
-             , H.path          = TE.encodeUtf8 path
+             , H.path          = TE.encodeUtf8 ("/" <> apiVersion <> path)
              , H.redirectCount = 3
              , H.queryString   =
                  HT.renderSimpleQuery False $
