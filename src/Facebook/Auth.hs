@@ -125,21 +125,18 @@ getUserAccessTokenStep2 redirectUrl query =
          req <-
            fbreq "/oauth/access_token" Nothing $
            tsq creds [code, ("redirect_uri", TE.encodeUtf8 redirectUrl)]
-         preToken <- fmap (userAccessTokenParser now) . asBS =<< fbhttp req
+         response <- fbhttp req
+         (userToken :: AE.Value) <- asJson response
+         let (token, expire) = userAccessTokenParser now userToken
          -- Get user's ID throught Facebook's graph.
-         userInfo <-
-           asJson =<< fbhttp =<< fbreq "/me" (Just preToken) [("fields", "id")]
-         case (AE.parseEither (.: "id") userInfo, preToken) of
-           (Left str, _) ->
-             E.throw $
-             FbLibraryException $
-             T.concat
-               [ "getUserAccessTokenStep2: failed to get the UserId ("
-               , T.pack str
-               , ")"
-               ]
-           (Right (userId :: UserId), UserAccessToken _ d e) ->
-             return (UserAccessToken userId d e)
+         userResponse <-
+           fbhttp =<<
+           fbreq
+             "/me"
+             (Just (UserAccessToken "invalid id" token expire))
+             [("fields", "id")]
+         (userId :: UserId) <- asJson userResponse
+         return $ UserAccessToken userId token expire
     _ ->
       let [error_, errorReason, errorDescr] =
             map
@@ -154,20 +151,23 @@ getUserAccessTokenStep2 redirectUrl query =
 -- a broken 'UserId'.
 userAccessTokenParser
   :: UTCTime -- ^ 'getCurrentTime'
-  -> B.ByteString
-  -> UserAccessToken
-userAccessTokenParser now bs =
-  let q = HT.parseQuery bs
-      lookup' a = join (lookup a q)
-  in case (,) <$> lookup' "access_token" <*> lookup' "expires" of
-       (Just (tok, expt)) -> UserAccessToken userId (dec tok) (toExpire expt)
-       _ -> error $ "userAccessTokenParser: failed to parse " ++ show bs
+  -> AE.Value
+  -> (AccessTokenData, UTCTime)
+userAccessTokenParser now val =
+  case AE.parseMaybe tokenParser val of
+    Just (token, parser) -> (token, parser)
+    _ -> error $ "userAccessTokenParser: failed to parse " ++ show val
   where
-    toExpire expt =
-      let i = read (B8.unpack expt) :: Int
-      in addUTCTime (fromIntegral i) now
-    userId = error "userAccessTokenParser: never here"
-    dec = TE.decodeUtf8With TE.lenientDecode
+    toExpire expt = addUTCTime (fromIntegral expt) now
+    tokenParser :: AE.Value -> AE.Parser (AccessTokenData, UTCTime)
+    tokenParser val =
+      AE.withObject
+        "accessToken"
+        (\obj -> do
+           (token :: Text) <- obj AE..: "access_token"
+           (expires_in :: Int) <- obj AE..: "expires_in"
+           return (token, toExpire expires_in))
+        val
 
 -- | The URL an user should be redirected to in order to log them
 -- out of their Facebook session.  Facebook will then redirect
@@ -290,39 +290,40 @@ extendUserAccessToken
   :: (MonadBaseControl IO m, R.MonadResource m)
   => UserAccessToken
   -> FacebookT Auth m (Either FacebookException UserAccessToken)
-extendUserAccessToken token@(UserAccessToken uid data_ _) = do
-  expired <- hasExpired token
-  if expired
-    then return (Left hasExpiredExc)
-    else tryToExtend
-  where
-    tryToExtend =
-      runResourceInFb $
-      do creds <- getCreds
-         req <-
-           fbreq "/oauth/access_token" Nothing $
-           tsq
-             creds
-             [ ("grant_type", "fb_exchange_token")
-             , ("fb_exchange_token", TE.encodeUtf8 data_)
-             ]
-         eresponse <- E.try (asBS =<< fbhttp req)
-         case eresponse of
-           Right response -> do
-             now <- liftIO getCurrentTime
-             return
-               (Right $
-                case userAccessTokenParser now response of
-                  UserAccessToken _ data' expires' ->
-                    UserAccessToken uid data' expires')
-           Left exc -> return (Left exc)
-    hasExpiredExc =
-      mkExc
-        [ "the user access token has already expired, "
-        , "so I'll not try to extend it."
-        ]
-    mkExc = FbLibraryException . T.concat . ("extendUserAccessToken: " :)
+extendUserAccessToken = undefined
 
+-- extendUserAccessToken token@(UserAccessToken uid data_ _) = do
+--   expired <- hasExpired token
+--   if expired
+--     then return (Left hasExpiredExc)
+--     else tryToExtend
+--   where
+--     tryToExtend =
+--       runResourceInFb $
+--       do creds <- getCreds
+--          req <-
+--            fbreq "/oauth/access_token" Nothing $
+--            tsq
+--              creds
+--              [ ("grant_type", "fb_exchange_token")
+--              , ("fb_exchange_token", TE.encodeUtf8 data_)
+--              ]
+--          eresponse <- E.try (asBS =<< fbhttp req)
+--          case eresponse of
+--            Right response -> do
+--              now <- liftIO getCurrentTime
+--              return
+--                (Right $
+--                 case userAccessTokenParser now response of
+--                   UserAccessToken _ data' expires' ->
+--                     UserAccessToken uid data' expires')
+--            Left exc -> return (Left exc)
+--     hasExpiredExc =
+--       mkExc
+--         [ "the user access token has already expired, "
+--         , "so I'll not try to extend it."
+--         ]
+--     mkExc = FbLibraryException . T.concat . ("extendUserAccessToken: " :)
 -- | Parses a Facebook signed request
 -- (<https://developers.facebook.com/docs/authentication/signed_request/>),
 -- verifies its authencity and integrity using the HMAC and
