@@ -101,21 +101,21 @@ main =
      do creds <- getCredentials
         hspec $
         -- Run the tests twice, once in Facebook's production tier...
-          do facebookTests
-               "Production tier: "
-               creds
-               manager
-               (R.runResourceT . FB.runFacebookT creds manager)
-               (R.runResourceT . FB.runNoAuthFacebookT manager)
-             -- ...and the other in Facebook's beta tier.
-             facebookTests
-               "Beta tier: "
-               creds
-               manager
-               (R.runResourceT . FB.beta_runFacebookT creds manager)
-               (R.runResourceT . FB.beta_runNoAuthFacebookT manager)
-             -- Tests that don't depend on which tier is chosen.
-             libraryTests manager
+        -- do facebookTests
+        --      "Production tier: "
+        --      creds
+        --      manager
+        --      (R.runResourceT . FB.runFacebookT creds manager)
+        --      (R.runResourceT . FB.runNoAuthFacebookT manager)
+        --    -- ...and the other in Facebook's beta tier.
+        --    facebookTests
+        --      "Beta tier: "
+        --      creds
+        --      manager
+        --      (R.runResourceT . FB.beta_runFacebookT creds manager)
+        --      (R.runResourceT . FB.beta_runNoAuthFacebookT manager)
+        -- Tests that don't depend on which tier is chosen.
+          libraryTests manager
 
 facebookTests
   :: String
@@ -181,8 +181,7 @@ facebookTests pretitle creds manager runAuth runNoAuth = do
          do val <-
               runAuth $ -- Needs permission now: https://developers.facebook.com/docs/graph-api/reference/page#Reading
               do token <- FB.getAppAccessToken
-                 A.Object obj <-
-                   FB.getObject "/v2.8/19292868552" [] (Just token)
+                 A.Object obj <- FB.getObject "/19292868552" [] (Just token)
                  let Just r =
                        flip A.parseMaybe () $
                        const $ (,) <$> obj A..:? "id" <*> obj A..:? "name"
@@ -226,7 +225,7 @@ facebookTests pretitle creds manager runAuth runNoAuth = do
               do token <- FB.getAppAccessToken
                  fetchNextPageWorks =<<
                    FB.getObject
-                     "/v2.8/5281959998_10150628170209999/comments"
+                     "/5281959998_10150628170209999/comments"
                      []
                      (Just token)
        it "seems to work on a private list of app insights" $
@@ -234,7 +233,7 @@ facebookTests pretitle creds manager runAuth runNoAuth = do
               do token <- FB.getAppAccessToken
                  fetchNextPageWorks =<<
                    FB.getObject
-                     ("/v2.8/" <> FB.appId creds <> "/app_insights/api_calls")
+                     ("/" <> FB.appId creds <> "/app_insights/api_calls")
                      []
                      (Just token)
   describe' "fetchNextPage/fetchPreviousPage" $
@@ -252,7 +251,7 @@ facebookTests pretitle creds manager runAuth runNoAuth = do
               do token <- FB.getAppAccessToken
                  backAndForthWorks =<<
                    FB.getObject
-                     "/v2.8/5281959998_10150628170209999/comments"
+                     "/5281959998_10150628170209999/comments"
                      []
                      (Just token)
        it "seems to work on a private list of app insights" $
@@ -260,7 +259,7 @@ facebookTests pretitle creds manager runAuth runNoAuth = do
               do token <- FB.getAppAccessToken
                  backAndForthWorks =<<
                    FB.getObject
-                     ("/v2.8/" <> FB.appId creds <> "/app_insights/api_calls")
+                     ("/" <> FB.appId creds <> "/app_insights/api_calls")
                      []
                      (Just token)
   describe' "fetchAllNextPages" $
@@ -277,7 +276,7 @@ facebookTests pretitle creds manager runAuth runNoAuth = do
               do token <- FB.getAppAccessToken
                  pager <-
                    FB.getObject
-                     "/v2.8/63441126719_10154249531391720/comments"
+                     "/63441126719_10154249531391720/comments"
                      []
                      (Just token)
                  src <- FB.fetchAllNextPages pager
@@ -287,7 +286,7 @@ facebookTests pretitle creds manager runAuth runNoAuth = do
               do token <- FB.getAppAccessToken
                  pager <-
                    FB.getObject
-                     ("/v2.8/" <> FB.appId creds <> "/app_insights/api_calls")
+                     ("/" <> FB.appId creds <> "/app_insights/api_calls")
                      []
                      (Just token)
                  src <- FB.fetchAllNextPages pager
