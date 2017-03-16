@@ -54,6 +54,7 @@ import qualified Data.Text.Encoding as TE
 import qualified Data.Text.Encoding.Error as TE
 import qualified Network.HTTP.Conduit as H
 import qualified Network.HTTP.Types as HT
+import Data.Text (Text)
 
 import Facebook.Types
 import Facebook.Base
@@ -72,7 +73,21 @@ getAppAccessToken =
        fbreq "/oauth/access_token" Nothing $
        tsq creds [("grant_type", "client_credentials")]
      response <- fbhttp req
-     asJson response
+     (token :: AE.Value) <- asJson response
+     case AE.parseMaybe tokenParser token of
+       Just appToken -> return $ AppAccessToken appToken
+       _ ->
+         E.throw $
+         FbLibraryException ("Unable to parse: " <> (T.pack $ show token))
+  where
+    tokenParser :: AE.Value -> AE.Parser AccessTokenData
+    tokenParser val =
+      AE.withObject
+        "accessToken"
+        (\obj -> do
+           (token :: Text) <- obj AE..: "access_token"
+           return token)
+        val
 
 -- | The first step to get an user access token.  Returns the
 -- Facebook URL you should redirect you user to.  Facebook will
