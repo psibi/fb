@@ -53,7 +53,7 @@ apiVersion = "v2.8"
 -- | A plain 'H.Request' to a Facebook API.  Use this instead of
 -- 'def' when creating new 'H.Request'@s@ for Facebook.
 fbreq :: Monad m =>
-         Text                        -- ^ Path.
+         Text                        -- ^ Path. Should start from "/".
       -> Maybe (AccessToken anyKind) -- ^ Access token.
       -> HT.SimpleQuery              -- ^ Parameters.
       -> FacebookT anyAuth m H.Request
