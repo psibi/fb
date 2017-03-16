@@ -101,21 +101,21 @@ main =
      do creds <- getCredentials
         hspec $
         -- Run the tests twice, once in Facebook's production tier...
-        -- do facebookTests
-        --      "Production tier: "
-        --      creds
-        --      manager
-        --      (R.runResourceT . FB.runFacebookT creds manager)
-        --      (R.runResourceT . FB.runNoAuthFacebookT manager)
-        --    -- ...and the other in Facebook's beta tier.
-        --    facebookTests
-        --      "Beta tier: "
-        --      creds
-        --      manager
-        --      (R.runResourceT . FB.beta_runFacebookT creds manager)
-        --      (R.runResourceT . FB.beta_runNoAuthFacebookT manager)
-        -- Tests that don't depend on which tier is chosen.
-          libraryTests manager
+          do facebookTests
+               "Production tier: "
+               creds
+               manager
+               (R.runResourceT . FB.runFacebookT creds manager)
+               (R.runResourceT . FB.runNoAuthFacebookT manager)
+             -- ...and the other in Facebook's beta tier.
+             facebookTests
+               "Beta tier: "
+               creds
+               manager
+               (R.runResourceT . FB.beta_runFacebookT creds manager)
+               (R.runResourceT . FB.beta_runNoAuthFacebookT manager)
+             -- Tests that don't depend on which tier is chosen.
+             libraryTests manager
 
 facebookTests
   :: String
