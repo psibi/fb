@@ -290,40 +290,37 @@ extendUserAccessToken
   :: (MonadBaseControl IO m, R.MonadResource m)
   => UserAccessToken
   -> FacebookT Auth m (Either FacebookException UserAccessToken)
-extendUserAccessToken = undefined
+extendUserAccessToken token@(UserAccessToken uid data_ _) = do
+  expired <- hasExpired token
+  if expired
+    then return (Left hasExpiredExc)
+    else tryToExtend
+  where
+    tryToExtend =
+      runResourceInFb $
+      do creds <- getCreds
+         req <-
+           fbreq "/oauth/access_token" Nothing $
+           tsq
+             creds
+             [ ("grant_type", "fb_exchange_token")
+             , ("fb_exchange_token", TE.encodeUtf8 data_)
+             ]
+         response <- fbhttp req
+         userToken <- E.try $ asJson response
+         case userToken of
+           Right val -> do
+             now <- liftIO getCurrentTime
+             let (extendedtoken, expire) = userAccessTokenParser now val
+             return $ Right $ UserAccessToken uid extendedtoken expire
+           Left exc -> return (Left exc)
+    hasExpiredExc =
+      mkExc
+        [ "the user access token has already expired, "
+        , "so I'll not try to extend it."
+        ]
+    mkExc = FbLibraryException . T.concat . ("extendUserAccessToken: " :)
 
--- extendUserAccessToken token@(UserAccessToken uid data_ _) = do
---   expired <- hasExpired token
---   if expired
---     then return (Left hasExpiredExc)
---     else tryToExtend
---   where
---     tryToExtend =
---       runResourceInFb $
---       do creds <- getCreds
---          req <-
---            fbreq "/oauth/access_token" Nothing $
---            tsq
---              creds
---              [ ("grant_type", "fb_exchange_token")
---              , ("fb_exchange_token", TE.encodeUtf8 data_)
---              ]
---          eresponse <- E.try (asBS =<< fbhttp req)
---          case eresponse of
---            Right response -> do
---              now <- liftIO getCurrentTime
---              return
---                (Right $
---                 case userAccessTokenParser now response of
---                   UserAccessToken _ data' expires' ->
---                     UserAccessToken uid data' expires')
---            Left exc -> return (Left exc)
---     hasExpiredExc =
---       mkExc
---         [ "the user access token has already expired, "
---         , "so I'll not try to extend it."
---         ]
---     mkExc = FbLibraryException . T.concat . ("extendUserAccessToken: " :)
 -- | Parses a Facebook signed request
 -- (<https://developers.facebook.com/docs/authentication/signed_request/>),
 -- verifies its authencity and integrity using the HMAC and
