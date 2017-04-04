@@ -2,15 +2,15 @@ name:              fb
 version:           1.0.13
 license:           BSD3
 license-file:      LICENSE
-author:            Felipe Lessa
-maintainer:        Felipe Lessa <felipe.lessa@gmail.com>
+author:            Felipe Lessa, Sibi
+maintainer:        Sibi <sibi@psibi.in>
 copyright:         (c) Prowdsponsor
 synopsis:          Bindings to Facebook's API.
 category:          Web
 stability:         Experimental
 cabal-version:     >= 1.8
 build-type:        Simple
-homepage:          https://github.com/prowdsponsor/fb
+homepage:          https://github.com/psibi/fb
 
 description:
   This package exports bindings to Facebook's APIs (see
@@ -24,17 +24,19 @@ description:
   API, this package is being developed on demand.  If you need
   something that has not been implemented yet, please send a pull
   request or file an issue on GitHub
-  (<https://github.com/prowdsponsor/fb/issues>).
+  (<https://github.com/psibi/fb/issues>).
 
 extra-source-files:
   tests/Main.hs
   tests/tryIt.hs
   example.hs
+  README.md
+  CHANGELOG.md
 
 
 source-repository head
   type:     git
-  location: git://github.com/prowdsponsor/fb.git
+  location: git@github.com:psibi/fb.git
 
 
 flag debug
