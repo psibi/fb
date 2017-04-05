@@ -1,5 +1,7 @@
 module Facebook
-  ( FacebookT
+  (
+   -- * @FacebookT@ monad transformer
+   FacebookT
   , runFacebookT
   , runNoAuthFacebookT
   , mapFacebookT
@@ -124,7 +126,6 @@ module Facebook
   , unPermission
   ) where
 
--- * @FacebookT@ monad transformer
 import Facebook.Types
 import Facebook.Monad
 import Facebook.Base
