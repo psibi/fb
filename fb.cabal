@@ -1,5 +1,5 @@
 name:              fb
-version:           1.1.0
+version:           1.1.1
 license:           BSD3
 license-file:      LICENSE
 author:            Felipe Lessa, Sibi
@@ -11,6 +11,7 @@ stability:         Experimental
 cabal-version:     >= 1.8
 build-type:        Simple
 homepage:          https://github.com/psibi/fb
+bug-reports:       https://github.com/psibi/fb/issues
 
 description:
   This package exports bindings to Facebook's APIs (see
