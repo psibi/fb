@@ -10,7 +10,6 @@ import Control.Applicative
 import Control.Monad (mzero)
 import Control.Monad.IO.Class (MonadIO(liftIO))
 import Control.Monad.Trans.Class (lift)
-import Control.Monad.Trans.Control (MonadBaseControl)
 import Data.Function (on)
 import Data.Int (Int8, Int16, Int32, Int64)
 import Data.Maybe (isJust, isNothing)
@@ -22,7 +21,7 @@ import System.Exit (exitFailure)
 import System.IO.Error (isDoesNotExistError)
 import Data.List ((\\))
 import Data.Monoid ((<>))
-import qualified Control.Exception.Lifted as E
+import qualified UnliftIO.Exception as E
 import qualified Control.Monad.Trans.Resource as R
 import qualified Data.Aeson as A
 import qualified Data.Aeson.Types as A
@@ -54,7 +53,7 @@ getCredentials = tryToGet `E.catch` showHelp
         mapM getEnv ["APP_NAME", "APP_ID", "APP_SECRET"]
       return $ FB.Credentials (T.pack appName) (T.pack appId) (T.pack appSecret)
     showHelp exc
-      | not (isDoesNotExistError exc) = E.throw exc
+      | not (isDoesNotExistError exc) = E.throwIO exc
     showHelp _ = do
       putStrLn $
         unlines
@@ -94,28 +93,27 @@ invalidAppAccessToken :: FB.AppAccessToken
 invalidAppAccessToken = FB.AppAccessToken "invalid"
 
 main :: IO ()
-main =
-  H.withManager $
-  \manager ->
-     liftIO $
-     do creds <- getCredentials
-        hspec $
-        -- Run the tests twice, once in Facebook's production tier...
-          do facebookTests
-               "Production tier: "
-               creds
-               manager
-               (R.runResourceT . FB.runFacebookT creds manager)
-               (R.runResourceT . FB.runNoAuthFacebookT manager)
-             -- ...and the other in Facebook's beta tier.
-             facebookTests
-               "Beta tier: "
-               creds
-               manager
-               (R.runResourceT . FB.beta_runFacebookT creds manager)
-               (R.runResourceT . FB.beta_runNoAuthFacebookT manager)
-             -- Tests that don't depend on which tier is chosen.
-             libraryTests manager
+main = do
+  manager <- H.newManager H.tlsManagerSettings
+  liftIO $
+    do creds <- getCredentials
+       hspec $
+       -- Run the tests twice, once in Facebook's production tier...
+         do facebookTests
+              "Production tier: "
+              creds
+              manager
+              (R.runResourceT . FB.runFacebookT creds manager)
+              (R.runResourceT . FB.runNoAuthFacebookT manager)
+            -- ...and the other in Facebook's beta tier.
+            facebookTests
+              "Beta tier: "
+              creds
+              manager
+              (R.runResourceT . FB.beta_runFacebookT creds manager)
+              (R.runResourceT . FB.beta_runNoAuthFacebookT manager)
+            -- Tests that don't depend on which tier is chosen.
+            libraryTests manager
 
 facebookTests
   :: String
@@ -252,7 +250,7 @@ facebookTests pretitle creds manager runAuth runNoAuth = do
                  backAndForthWorks =<<
                    FB.getObject
                      "/5281959998_10150628170209999/comments"
-                     []
+                     [("filter", "stream")]
                      (Just token)
        it "seems to work on a private list of app insights" $
          do runAuth $
@@ -520,7 +518,7 @@ instance QC.Arbitrary Text where
 -- | Perform an action with a new test user. Remove the new test user
 -- after the action is performed.
 withTestUser
-  :: (R.MonadResource m, MonadBaseControl IO m)
+  :: (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m)
   => FB.CreateTestUser
   -> (FB.TestUser -> FB.FacebookT FB.Auth m a)
   -> FB.FacebookT FB.Auth m a
