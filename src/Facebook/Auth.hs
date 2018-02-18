@@ -19,7 +19,7 @@ module Facebook.Auth
 #if __GLASGOW_HASKELL__ <= 784
 import Control.Applicative
 #endif
-import Control.Monad (guard, join, liftM, mzero)
+import Control.Monad (guard, liftM, mzero)
 import Control.Monad.IO.Class (MonadIO(liftIO))
 import Control.Monad.Trans.Maybe (MaybeT(..))
 import Crypto.Classes (constTimeEq)
@@ -38,22 +38,15 @@ import qualified Control.Monad.Trans.Resource as R
 import qualified Data.Aeson as AE
 import qualified Data.Aeson.Types as AE
 import qualified Data.Attoparsec.ByteString.Char8 as AB
-import qualified Data.Attoparsec.Text as A
 import qualified Data.ByteString as B
-import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Base64.URL as Base64URL
 import qualified Data.ByteString.Char8 as B8
-import qualified Data.Conduit as C
-import qualified Data.Conduit.Attoparsec as C
-import qualified Data.Conduit.Text as CT
 import qualified Data.List as L
 import qualified Data.Serialize as Cereal
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import qualified Data.Text.Encoding.Error as TE
-import qualified Network.HTTP.Conduit as H
 import qualified Network.HTTP.Types as HT
-import Data.Text (Text)
 
 import Facebook.Types
 import Facebook.Base
@@ -174,14 +167,14 @@ userAccessTokenParser now val =
   where
     toExpire expt = addUTCTime (fromIntegral expt) now
     tokenParser :: AE.Value -> AE.Parser (AccessTokenData, UTCTime)
-    tokenParser val =
+    tokenParser value =
       AE.withObject
         "accessToken"
         (\obj -> do
            (token :: Text) <- obj AE..: "access_token"
            (expires_in :: Int) <- obj AE..: "expires_in"
            return (token, toExpire expires_in))
-        val
+        value
 
 -- | The URL an user should be redirected to in order to log them
 -- out of their Facebook session.  Facebook will then redirect

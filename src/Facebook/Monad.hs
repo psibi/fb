@@ -31,7 +31,6 @@ import Control.Monad.Fix (MonadFix)
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.Logger (MonadLogger(..))
 import Control.Monad.Trans.Class (MonadTrans(lift))
-import Control.Monad.Trans.Reader
 import UnliftIO
 import Control.Monad.Trans.Reader (ReaderT(..), ask, mapReaderT)
 import Data.Typeable (Typeable)

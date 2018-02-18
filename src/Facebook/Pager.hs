@@ -1,5 +1,5 @@
 {-# LANGUAGE ConstraintKinds, DeriveDataTypeable, FlexibleContexts,
-  OverloadedStrings, CPP#-}
+  OverloadedStrings #-}
 
 module Facebook.Pager
   ( Pager(..)
@@ -83,11 +83,7 @@ fetchHelper pagerRef pager =
   case pagerRef pager of
     Nothing -> return Nothing
     Just url -> do
-#if MIN_VERSION_http_client(0,4,30)
       req <- liftIO (H.parseRequest url)
-#else
-      req <- liftIO (H.parseUrl url)
-#endif
       Just <$>
         (asJson =<<
          fbhttp
@@ -101,7 +97,7 @@ fetchHelper pagerRef pager =
 -- Next pages will be fetched on-demand.
 fetchAllNextPages
   :: (Monad m, A.FromJSON a, R.MonadUnliftIO n, R.MonadThrow n)
-  => Pager a -> FacebookT anyAuth m (C.Source n a)
+  => Pager a -> FacebookT anyAuth m (C.ConduitT () a n ())
 fetchAllNextPages = fetchAllHelper pagerNext
 
 -- | Tries to fetch all previous pages and returns a 'C.Source'
@@ -110,23 +106,21 @@ fetchAllNextPages = fetchAllHelper pagerNext
 -- considered.  Previous pages will be fetched on-demand.
 fetchAllPreviousPages
   :: (Monad m, A.FromJSON a, R.MonadUnliftIO n, R.MonadThrow n)
-  => Pager a -> FacebookT anyAuth m (C.Source n a)
+  => Pager a -> FacebookT anyAuth m (C.ConduitT () a n ())
 fetchAllPreviousPages = fetchAllHelper pagerPrevious
 
 -- | (Internal) See 'fetchAllNextPages' and 'fetchAllPreviousPages'.
 fetchAllHelper
   :: (Monad m, A.FromJSON a, R.MonadUnliftIO n, R.MonadThrow n)
-  => (Pager a -> Maybe String) -> Pager a -> FacebookT anyAuth m (C.Source n a)
+  => (Pager a -> Maybe String)
+  -> Pager a
+  -> FacebookT anyAuth m (C.ConduitT () a n ())
 fetchAllHelper pagerRef pager = do
   manager <- getManager
   let go (x:xs) mnext = C.yield x >> go xs mnext
       go [] Nothing = return ()
       go [] (Just next) = do
-#if MIN_VERSION_http_client(0,4,30)
         req <- liftIO (H.parseRequest next)
-#else
-        req <- liftIO (H.parseUrl next)
-#endif
         let get =
               fbhttpHelper
                 manager

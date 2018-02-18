@@ -1,4 +1,7 @@
-{-# LANGUAGE DeriveDataTypeable, FlexibleContexts, OverloadedStrings, CPP #-}
+{-#LANGUAGE DeriveDataTypeable#-}
+{-#LANGUAGE FlexibleContexts#-}
+{-#LANGUAGE OverloadedStrings#-}
+{-#LANGUAGE CPP#-}
 module Facebook.Base
     ( fbreq
     , ToSimpleQuery(..)
@@ -35,9 +38,6 @@ import qualified Data.Text.Encoding as TE
 import qualified Network.HTTP.Conduit as H
 import qualified Network.HTTP.Types as HT
 import qualified Data.ByteString.Lazy as L
-#if !MIN_VERSION_http_client(0,4,30)
-import Data.Default (def)
-#endif
 #if DEBUG
 import Control.Monad.IO.Class (MonadIO, liftIO)
 import Text.Printf (printf)
@@ -62,7 +62,6 @@ fbreq path mtoken query =
       let host = case tier of
                    Production -> "graph.facebook.com"
                    Beta ->  "graph.beta.facebook.com"
-#if MIN_VERSION_http_client(0,4,30)
       in H.defaultRequest { H.secure        = True
              , H.host          = host
              , H.port          = 443
@@ -77,18 +76,6 @@ fbreq path mtoken query =
              , H.responseTimeout = Just 120000000 -- 2 minutes
 #endif
              }
-#else
-      in def { H.secure        = True
-             , H.host          = host
-             , H.port          = 443
-             , H.path          = TE.encodeUtf8 path
-             , H.redirectCount = 3
-             , H.queryString   =
-                 HT.renderSimpleQuery False $
-                 maybe id tsq mtoken query
-             , H.responseTimeout = Just 120000000 -- 2 minutes
-             }
-#endif
 
 
 -- | Internal class for types that may be passed on queries to
