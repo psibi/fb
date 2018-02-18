@@ -19,14 +19,14 @@ import Data.ByteString.Char8 (ByteString)
 import Data.Text (Text)
 import Data.Typeable (Typeable)
 
-import qualified Control.Exception.Lifted as E
+import qualified UnliftIO.Exception as E
 import Control.Monad.Trans.Class (MonadTrans)
-import Control.Monad.Trans.Control (MonadBaseControl)
 import qualified Control.Monad.Trans.Resource as R
 import qualified Data.Aeson as A
 import qualified Data.Attoparsec.ByteString.Char8 as AT
 import qualified Data.ByteString as B
 import qualified Data.Conduit as C
+import Data.Conduit ((.|))
 import qualified Data.Conduit.Attoparsec as C
 import qualified Data.Conduit.List as CL
 import qualified Data.Conduit.Binary as CB
@@ -110,12 +110,12 @@ instance ToSimpleQuery (AccessToken anyKind) where
 -- | Converts a plain 'H.Response' coming from 'H.http' into a
 -- JSON value.
 asJson :: (MonadIO m, MonadTrans t, R.MonadThrow m, A.FromJSON a) =>
-          H.Response (C.ResumableSource m ByteString)
+          H.Response (C.ConduitT () ByteString m ())
        -> t m a
 asJson = lift . asJsonHelper
 
 asJsonHelper :: (MonadIO m, R.MonadThrow m, A.FromJSON a) =>
-                H.Response (C.ResumableSource m ByteString)
+                H.Response (C.ConduitT () ByteString m ())
              -> m a
 asJsonHelper response = do
 #if DEBUG
@@ -123,12 +123,12 @@ asJsonHelper response = do
   _ <- liftIO $ printf "asJsonHelper: %s\n" (show bs)
   val <- either (fail . ("asJsonHelper: A.decode returned " ++)) return (A.eitherDecode bs)
 #else
-  val <- H.responseBody response C.$$+- C.sinkParser A.json'
+  val <- C.runConduit $ (H.responseBody response) .| C.sinkParser A.json'
 #endif
   case A.fromJSON val of
     A.Success r -> return r
     A.Error str ->
-        E.throw $ FbLibraryException $ T.concat
+        E.throwIO $ FbLibraryException $ T.concat
              [ "Facebook.Base.asJson: could not parse "
              , " Facebook's response as a JSON value ("
              , T.pack str, ")" ]
@@ -136,9 +136,9 @@ asJsonHelper response = do
 
 -- | Converts a plain 'H.Response' into a string 'ByteString'.
 asBS :: (Monad m) =>
-        H.Response (C.ResumableSource m ByteString)
+        H.Response (C.ConduitT () ByteString m ())
      -> FacebookT anyAuth m ByteString
-asBS response = lift $ H.responseBody response C.$$+- fmap B.concat CL.consume
+asBS response = lift $ C.runConduit $ H.responseBody response .| fmap B.concat CL.consume
 
 
 -- | An exception that may be thrown by functions on this
@@ -163,17 +163,17 @@ instance E.Exception FacebookException where
 
 -- | Same as 'H.http', but tries to parse errors and throw
 -- meaningful 'FacebookException'@s@.
-fbhttp :: (MonadBaseControl IO m, R.MonadResource m) =>
+fbhttp :: (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m) =>
           H.Request
-       -> FacebookT anyAuth m (H.Response (C.ResumableSource m ByteString))
+       -> FacebookT anyAuth m (H.Response (C.ConduitT () ByteString m ()))
 fbhttp req = do
   manager <- getManager
   lift (fbhttpHelper manager req)
 
-fbhttpHelper :: (MonadBaseControl IO m, R.MonadResource m) =>
+fbhttpHelper :: (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m) =>
                 H.Manager
              -> H.Request
-             -> m (H.Response (C.ResumableSource m ByteString))
+             -> m (H.Response (C.ConduitT () ByteString m ()))
 fbhttpHelper manager req = do
 #if MIN_VERSION_http_client(0,5,0)
   let req' = req { H.checkResponse = \_ _ -> return () }
@@ -193,7 +193,7 @@ fbhttpHelper manager req = do
     then return response
     else do
 #if MIN_VERSION_http_client(0,5,0)
-      fullResp <- H.responseBody response C.$$+- CB.sinkLbs
+      fullResp <- C.runConduit $ (H.responseBody response) .| CB.sinkLbs
       let res' = fmap (const ()) response
       let statusexc = H.HttpExceptionRequest req $ H.StatusCodeException res' (L.toStrict fullResp)
 #else
@@ -203,7 +203,7 @@ fbhttpHelper manager req = do
 
       val <- E.try $ asJsonHelper response
       case val :: Either E.SomeException FacebookException of
-        Right fbexc -> E.throw fbexc
+        Right fbexc -> E.throwIO fbexc
         Left _ -> do
           case AT.parse wwwAuthenticateParser <$>
                lookup "WWW-Authenticate" headers of
@@ -226,7 +226,7 @@ wwwAuthenticateParser =
 
 -- | Send a @HEAD@ request just to see if the resposne status
 -- code is 2XX (returns @True@) or not (returns @False@).
-httpCheck :: (MonadBaseControl IO m, R.MonadResource m) =>
+httpCheck :: (R.MonadResource m, R.MonadUnliftIO m) =>
              H.Request
           -> FacebookT anyAuth m Bool
 

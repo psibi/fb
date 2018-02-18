@@ -1,5 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable, FlexibleContexts,
-  OverloadedStrings #-}
+  OverloadedStrings, CPP #-}
 
 module Facebook.Object.FriendList
   ( FriendList(..)
@@ -11,7 +11,6 @@ module Facebook.Object.FriendList
 import Control.Applicative
 #endif
 import Control.Monad (mzero)
-import Control.Monad.Trans.Control (MonadBaseControl)
 import Data.Aeson ((.:))
 import Data.Text (Text)
 import Data.Typeable (Typeable)
@@ -75,7 +74,7 @@ instance A.ToJSON FriendListType where
 -- close_friends, acquaintances, restricted, user_created, education, work, current_city, family
 -- | Get the friend lists of the given user.
 getUserFriendLists
-  :: (R.MonadResource m, MonadBaseControl IO m)
+  :: (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m)
   => UserId -- ^ User ID or @\"me\"@.
   -> [Argument] -- ^ Arguments to be passed to Facebook.
   -> UserAccessToken -- ^ User access token.
@@ -85,7 +84,7 @@ getUserFriendLists id_ query token =
 
 -- | Get the members of a friend list.
 getFriendListMembers
-  :: (R.MonadResource m, MonadBaseControl IO m)
+  :: (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m)
   => Id -- ^ List ID.
   -> [Argument] -- ^ Arguments to be passed to Facebook.
   -> UserAccessToken -- ^ User access token.

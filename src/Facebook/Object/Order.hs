@@ -8,11 +8,8 @@ module Facebook.Object.Order
   , OrderApplication(..)
   , getOrder
   ) where
-#if __GLASGOW_HASKELL__ <= 784
-import Control.Applicative
-#endif
+
 import Control.Monad (mzero)
-import Control.Monad.Trans.Control (MonadBaseControl)
 import Data.Text (Text)
 import Data.Aeson ((.:), (.:?))
 import Data.Typeable (Typeable)
@@ -83,7 +80,7 @@ instance A.FromJSON OrderStatus where
 -- | Get an 'Order' using its 'OrderId'.  The user access token
 -- is mandatory.
 getOrder
-  :: (R.MonadResource m, MonadBaseControl IO m)
+  :: (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m)
   => OrderId -- ^ Order ID.
   -> UserAccessToken -- ^ User access token.
   -> FacebookT anyAuth m Order

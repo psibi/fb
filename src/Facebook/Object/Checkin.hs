@@ -1,5 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable, FlexibleContexts,
-  OverloadedStrings #-}
+  OverloadedStrings, CPP #-}
 
 module Facebook.Object.Checkin
   ( Checkin(..)
@@ -11,7 +11,6 @@ module Facebook.Object.Checkin
 import Control.Applicative
 #endif
 import Control.Monad (mzero)
-import Control.Monad.Trans.Control (MonadBaseControl)
 import Data.Aeson ((.:), (.:?))
 import Data.Text (Text)
 import Data.Time (UTCTime)
@@ -62,7 +61,7 @@ instance A.FromJSON CheckinFrom where
 -- optional, but when provided more information can be returned
 -- back by Facebook.
 getCheckin
-  :: (R.MonadResource m, MonadBaseControl IO m)
+  :: (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m)
   => Id -- ^ Checkin ID.
   -> [Argument] -- ^ Arguments to be passed to Facebook.
   -> Maybe UserAccessToken -- ^ Optional user access token.
@@ -72,7 +71,7 @@ getCheckin id_ query mtoken = getObject ("/" <> idCode id_) query mtoken
 -- | Creates a 'check-in' and returns its ID. Place and
 -- coordinates are both required by Facebook.
 createCheckin
-  :: (R.MonadResource m, MonadBaseControl IO m)
+  :: (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m)
   => Id -- ^ Place ID.
   -> GeoCoordinates -- ^ Coordinates.
   -> [Argument] -- ^ Other arguments of the action.

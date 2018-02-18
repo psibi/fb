@@ -1,4 +1,4 @@
-{-# LANGUAGE CPP, DeriveDataTypeable, GADTs, StandaloneDeriving #-}
+{-# LANGUAGE CPP, DeriveDataTypeable, GADTs, StandaloneDeriving, GeneralizedNewtypeDeriving, OverloadedStrings #-}
 
 module Facebook.Types
   ( Credentials(..)

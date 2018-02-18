@@ -7,11 +7,8 @@ module Facebook.Object.Page
   , getPage_
   , searchPages
   ) where
-#if __GLASGOW_HASKELL__ <= 784
-import Control.Applicative
-#endif
+
 import Control.Monad (mzero)
-import Control.Monad.Trans.Control (MonadBaseControl)
 import Data.Aeson ((.:), (.:?))
 import qualified Control.Monad.Trans.Resource as R
 import qualified Data.Aeson as A
@@ -60,7 +57,7 @@ instance A.FromJSON Page where
 
 -- | Get a page using its ID. The user access token is optional.
 getPage
-  :: (R.MonadResource m, MonadBaseControl IO m)
+  :: (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m)
   => Id -- ^ Page ID
   -> [Argument] -- ^ Arguments to be passed to Facebook
   -> Maybe UserAccessToken -- ^ Optional user access token
@@ -69,7 +66,7 @@ getPage id_ = getObject $ ("/" <> idCode id_)
 
 -- | Get a page using its ID. The user access token is optional.
 getPage_
-  :: (R.MonadResource m, MonadBaseControl IO m)
+  :: (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m)
   => Id -- ^ Page ID
   -> [Argument] -- ^ Arguments to be passed to Facebook
   -> Maybe AppAccessToken -- ^ Optional user access token
@@ -78,7 +75,7 @@ getPage_ id_ = getObject $ ("/" <> idCode id_)
 
 -- | Search pages by keyword. The user access token is optional.
 searchPages
-  :: (R.MonadResource m, MonadBaseControl IO m)
+  :: (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m)
   => Text -- ^ Keyword to search for
   -> [Argument] -- ^ Arguments to pass to Facebook
   -> Maybe UserAccessToken -- ^ Optional user access token

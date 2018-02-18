@@ -1,5 +1,5 @@
 {-# LANGUAGE FlexibleContexts, GADTs, ScopedTypeVariables,
-  OverloadedStrings #-}
+  OverloadedStrings, CPP #-}
 
 module Facebook.Auth
   ( getAppAccessToken
@@ -21,7 +21,6 @@ import Control.Applicative
 #endif
 import Control.Monad (guard, join, liftM, mzero)
 import Control.Monad.IO.Class (MonadIO(liftIO))
-import Control.Monad.Trans.Control (MonadBaseControl)
 import Control.Monad.Trans.Maybe (MaybeT(..))
 import Crypto.Classes (constTimeEq)
 import Crypto.Hash.CryptoAPI (SHA256)
@@ -34,7 +33,7 @@ import Data.Time (getCurrentTime, addUTCTime, UTCTime)
 import Data.Typeable (Typeable)
 import Data.String (IsString(..))
 
-import qualified Control.Exception.Lifted as E
+import qualified UnliftIO.Exception as E
 import qualified Control.Monad.Trans.Resource as R
 import qualified Data.Aeson as AE
 import qualified Data.Aeson.Types as AE
@@ -64,7 +63,7 @@ import Facebook.Monad
 -- credentials.
 -- Ref: https://developers.facebook.com/docs/facebook-login/manually-build-a-login-flow
 getAppAccessToken
-  :: (R.MonadResource m, MonadBaseControl IO m)
+  :: (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m)
   => FacebookT Auth m AppAccessToken
 getAppAccessToken =
   runResourceInFb $
@@ -77,7 +76,7 @@ getAppAccessToken =
      case AE.parseMaybe tokenParser token of
        Just appToken -> return $ AppAccessToken appToken
        _ ->
-         E.throw $
+         E.throwIO $
          FbLibraryException ("Unable to parse: " <> (T.pack $ show token))
   where
     tokenParser :: AE.Value -> AE.Parser AccessTokenData
@@ -125,7 +124,7 @@ getUserAccessTokenStep1 redirectUrl perms = do
 -- to this function that will complete the user authentication
 -- flow and give you an @'UserAccessToken'@.
 getUserAccessTokenStep2
-  :: (MonadBaseControl IO m, R.MonadResource m)
+  :: (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m)
   => RedirectUrl -- ^ Should be exactly the same
      -- as in 'getUserAccessTokenStep1'.
   -> [Argument] -- ^ Query parameters.
@@ -159,7 +158,7 @@ getUserAccessTokenStep2 redirectUrl query =
               ["error", "error_reason", "error_description"]
           errorType = T.concat [t error_, " (", t errorReason, ")"]
           t = TE.decodeUtf8With TE.lenientDecode
-      in E.throw $ FacebookException errorType (t errorDescr)
+      in E.throwIO $ FacebookException errorType (t errorDescr)
 
 -- | Attoparsec parser for user access tokens returned by
 -- Facebook as a query string.  Returns an user access token with
@@ -269,7 +268,7 @@ hasExpired token =
 -- case of an user access token, they may have changed their
 -- password, logged out from Facebook or blocked your app.
 isValid
-  :: (MonadBaseControl IO m, R.MonadResource m)
+  :: (R.MonadResource m, R.MonadUnliftIO m)
   => AccessToken anyKind -> FacebookT anyAuth m Bool
 isValid token = do
   expired <- hasExpired token
@@ -302,7 +301,7 @@ isValid token = do
 -- can't assume this).  Note that expired access tokens can't be
 -- extended, only valid tokens.
 extendUserAccessToken
-  :: (MonadBaseControl IO m, R.MonadResource m)
+  :: (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m)
   => UserAccessToken
   -> FacebookT Auth m (Either FacebookException UserAccessToken)
 extendUserAccessToken token@(UserAccessToken uid data_ _) = do
@@ -399,7 +398,7 @@ addBase64Padding bs
 
 -- | Get detailed information about an access token.
 debugToken
-  :: (MonadBaseControl IO m, R.MonadResource m)
+  :: (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m)
   => AppAccessToken -- ^ Your app access token.
   -> AccessTokenData -- ^ The access token you want to debug.
   -> FacebookT Auth m DebugToken

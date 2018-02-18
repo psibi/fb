@@ -1,4 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Facebook.TestUsers
   ( TestUser(..)
@@ -14,7 +16,6 @@ module Facebook.TestUsers
 
 import Control.Applicative ((<$>), (<*>))
 import Control.Monad (unless, mzero)
-import Control.Monad.Trans.Control (MonadBaseControl)
 import Data.ByteString.Lazy (fromStrict)
 import Data.Default
 import Data.Text
@@ -24,7 +25,7 @@ import Data.Typeable (Typeable)
 import Data.Aeson
 import Data.Aeson.Types
 
-import qualified Control.Exception.Lifted as E
+import qualified UnliftIO.Exception as E
 import qualified Control.Monad.Trans.Resource as R
 import qualified Data.Aeson as A
 import qualified Data.ByteString.Char8 as B
@@ -93,7 +94,7 @@ createTestUserQueryArgs (CreateTestUser installed name locale) =
 -- | Create a new test user.
 -- Ref: https://developers.facebook.com/docs/graph-api/reference/v2.8/app/accounts/test-users#publish
 createTestUser
-  :: (R.MonadResource m, MonadBaseControl IO m)
+  :: (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m)
   => CreateTestUser -- ^ How the test user should be
      -- created.
   -> AppAccessToken -- ^ Access token for your app.
@@ -105,7 +106,7 @@ createTestUser userInfo token = do
 
 -- | Get a list of test users.
 getTestUsers
-  :: (R.MonadResource m, MonadBaseControl IO m)
+  :: (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m)
   => AppAccessToken -- ^ Access token for your app.
   -> FacebookT Auth m (Pager TestUser)
 getTestUsers token = do
@@ -113,7 +114,7 @@ getTestUsers token = do
   getObject ("/" <> appId creds <> "/accounts/test-users") [] (Just token)
 
 disassociateTestuser
-  :: (MonadBaseControl IO m, R.MonadResource m)
+  :: (R.MonadUnliftIO m, R.MonadThrow m, R.MonadResource m)
   => TestUser -> AppAccessToken -> FacebookT Auth m Bool
 disassociateTestuser testUser _token = do
   creds <- getCreds
@@ -124,7 +125,7 @@ disassociateTestuser testUser _token = do
 
 -- | Remove an existing test user.
 removeTestUser
-  :: (R.MonadResource m, MonadBaseControl IO m)
+  :: (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m)
   => TestUser -- ^ The TestUser to be removed.
   -> AppAccessToken -- ^ Access token for your app (ignored since fb 0.14.7).
   -> FacebookT Auth m Bool
@@ -143,14 +144,14 @@ removeTestUser testUser _token = do
 -- user B as query parameter. The first call creates a friend request
 -- and the second call accepts the friend request.
 makeFriendConn
-  :: (R.MonadResource m, MonadBaseControl IO m)
+  :: (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m)
   => TestUser -> TestUser -> FacebookT Auth m ()
 makeFriendConn (TestUser {tuAccessToken = Nothing}) _ =
-  E.throw $
+  E.throwIO $
   FbLibraryException
     "The test user passed on the first argument doesn't have a token. Both users must have a token."
 makeFriendConn _ (TestUser {tuAccessToken = Nothing}) =
-  E.throw $
+  E.throwIO $
   FbLibraryException
     "The test user passed on the second argument doesn't have a token. Both users must have a token."
 makeFriendConn (TestUser {tuId = id1
@@ -163,8 +164,8 @@ makeFriendConn (TestUser {tuId = id1
           Nothing
   r1 <- friendReq id1 id2 token1
   r2 <- friendReq id2 id1 token2
-  unless r1 $ E.throw $ FbLibraryException "Couldn't make friend request."
-  unless r2 $ E.throw $ FbLibraryException "Couldn't accept friend request."
+  unless r1 $ E.throwIO $ FbLibraryException "Couldn't make friend request."
+  unless r2 $ E.throwIO $ FbLibraryException "Couldn't accept friend request."
   return ()
 
 -- | Create an 'UserAccessToken' from a 'TestUser'.  It's incomplete
@@ -179,7 +180,7 @@ incompleteTestUserAccessToken t = do
 -- as a JSON, it tries to parse either as "true" or "false".
 -- Used only by the Test User API bindings.
 getObjectBool
-  :: (R.MonadResource m, MonadBaseControl IO m)
+  :: (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m)
   => Text
      -- ^ Path (should begin with a slash @\/@).
   -> [Argument]

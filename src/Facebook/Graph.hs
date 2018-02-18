@@ -17,7 +17,6 @@ module Facebook.Graph
 import Control.Applicative
 #endif
 import Control.Monad (mzero)
-import Control.Monad.Trans.Control (MonadBaseControl)
 import Data.ByteString.Char8 (ByteString)
 import Data.Int (Int8, Int16, Int32, Int64)
 import Data.List (intersperse)
@@ -52,7 +51,7 @@ import Facebook.Pager
 
 -- | Make a raw @GET@ request to Facebook's Graph API.
 getObject
-  :: (R.MonadResource m, MonadBaseControl IO m, A.FromJSON a)
+  :: (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m, A.FromJSON a)
   => Text -- ^ Path (should begin with a slash @\/@)
   -> [Argument] -- ^ Arguments to be passed to Facebook
   -> Maybe (AccessToken anyKind) -- ^ Optional access token
@@ -62,7 +61,7 @@ getObject path query mtoken =
 
 -- | Make a raw @POST@ request to Facebook's Graph API.
 postObject
-  :: (R.MonadResource m, MonadBaseControl IO m, A.FromJSON a)
+  :: (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m, A.FromJSON a)
   => Text -- ^ Path (should begin with a slash @\/@)
   -> [Argument] -- ^ Arguments to be passed to Facebook
   -> AccessToken anyKind -- ^ Access token
@@ -71,7 +70,7 @@ postObject = methodObject HT.methodPost
 
 -- | Make a raw @DELETE@ request to Facebook's Graph API.
 deleteObject
-  :: (R.MonadResource m, MonadBaseControl IO m, A.FromJSON a)
+  :: (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m, A.FromJSON a)
   => Text -- ^ Path (should begin with a slash @\/@)
   -> [Argument] -- ^ Arguments to be passed to Facebook
   -> AccessToken anyKind -- ^ Access token
@@ -80,7 +79,7 @@ deleteObject = methodObject HT.methodDelete
 
 -- | Helper function used by 'postObject' and 'deleteObject'.
 methodObject
-  :: (R.MonadResource m, MonadBaseControl IO m, A.FromJSON a)
+  :: (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m, A.FromJSON a)
   => HT.Method
   -> Text -- ^ Path (should begin with a slash @\/@)
   -> [Argument] -- ^ Arguments to be passed to Facebook
@@ -98,7 +97,7 @@ methodObject method path query token =
 -- | Make a raw @GET@ request to the /search endpoint of Facebook’s
 -- Graph API.  Returns a raw JSON 'A.Value'.
 searchObjects
-  :: (R.MonadResource m, MonadBaseControl IO m, A.FromJSON a)
+  :: (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m, A.FromJSON a)
   => Text -- ^ A Facebook object type to search for
   -> Text -- ^ The keyword to search for
   -> [Argument] -- ^ Additional arguments to pass

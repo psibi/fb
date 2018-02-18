@@ -1,5 +1,5 @@
 {-# LANGUAGE ConstraintKinds, DeriveDataTypeable, FlexibleContexts,
-  OverloadedStrings#-}
+  OverloadedStrings, CPP#-}
 
 module Facebook.Pager
   ( Pager(..)
@@ -8,13 +8,9 @@ module Facebook.Pager
   , fetchAllNextPages
   , fetchAllPreviousPages
   ) where
-#if __GLASGOW_HASKELL__ <= 784
-import Control.Applicative
-#endif
+
 import Control.Monad (mzero)
 import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Trans.Control (MonadBaseControl)
-import Control.Monad.Trans.Resource (MonadResourceBase)
 import Data.Typeable (Typeable)
 
 import qualified Control.Monad.Trans.Resource as R
@@ -65,7 +61,7 @@ instance A.FromJSON a =>
 -- 'Nothing' whenever the current @Pager@ does not have a
 -- 'pagerNext'.
 fetchNextPage
-  :: (R.MonadResource m, MonadBaseControl IO m, A.FromJSON a)
+  :: (R.MonadResource m, A.FromJSON a, R.MonadThrow m, R.MonadUnliftIO m)
   => Pager a -> FacebookT anyAuth m (Maybe (Pager a))
 fetchNextPage = fetchHelper pagerNext
 
@@ -73,13 +69,13 @@ fetchNextPage = fetchHelper pagerNext
 -- 'Nothing' whenever the current @Pager@ does not have a
 -- 'pagerPrevious'.
 fetchPreviousPage
-  :: (R.MonadResource m, MonadBaseControl IO m, A.FromJSON a)
+  :: (R.MonadResource m, A.FromJSON a, R.MonadThrow m, R.MonadUnliftIO m)
   => Pager a -> FacebookT anyAuth m (Maybe (Pager a))
 fetchPreviousPage = fetchHelper pagerPrevious
 
 -- | (Internal) See 'fetchNextPage' and 'fetchPreviousPage'.
 fetchHelper
-  :: (R.MonadResource m, MonadBaseControl IO m, A.FromJSON a)
+  :: (R.MonadResource m, A.FromJSON a, R.MonadThrow m, R.MonadUnliftIO m)
   => (Pager a -> Maybe String)
   -> Pager a
   -> FacebookT anyAuth m (Maybe (Pager a))
@@ -104,7 +100,7 @@ fetchHelper pagerRef pager =
 -- this page as well.  Previous pages will not be considered.
 -- Next pages will be fetched on-demand.
 fetchAllNextPages
-  :: (Monad m, MonadResourceBase n, A.FromJSON a)
+  :: (Monad m, A.FromJSON a, R.MonadUnliftIO n, R.MonadThrow n)
   => Pager a -> FacebookT anyAuth m (C.Source n a)
 fetchAllNextPages = fetchAllHelper pagerNext
 
@@ -113,13 +109,13 @@ fetchAllNextPages = fetchAllHelper pagerNext
 -- from this page as well.  Next pages will not be
 -- considered.  Previous pages will be fetched on-demand.
 fetchAllPreviousPages
-  :: (Monad m, MonadResourceBase n, A.FromJSON a)
+  :: (Monad m, A.FromJSON a, R.MonadUnliftIO n, R.MonadThrow n)
   => Pager a -> FacebookT anyAuth m (C.Source n a)
 fetchAllPreviousPages = fetchAllHelper pagerPrevious
 
 -- | (Internal) See 'fetchAllNextPages' and 'fetchAllPreviousPages'.
 fetchAllHelper
-  :: (Monad m, MonadResourceBase n, A.FromJSON a)
+  :: (Monad m, A.FromJSON a, R.MonadUnliftIO n, R.MonadThrow n)
   => (Pager a -> Maybe String) -> Pager a -> FacebookT anyAuth m (C.Source n a)
 fetchAllHelper pagerRef pager = do
   manager <- getManager
