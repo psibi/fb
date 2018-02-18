@@ -1,5 +1,8 @@
-{-# LANGUAGE FlexibleContexts, GADTs, ScopedTypeVariables,
-  OverloadedStrings, CPP #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE CPP #-}
 
 module Facebook.Auth
   ( getAppAccessToken

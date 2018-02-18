@@ -1,4 +1,5 @@
-{-# LANGUAGE FlexibleContexts, OverloadedStrings #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Facebook.RealTime
   ( RealTimeUpdateObject(..)
@@ -152,7 +153,7 @@ listSubscriptions apptoken = do
   path <- getSubscriptionsPath
   pager <- getObject path [] (Just apptoken)
   src <- fetchAllNextPages pager
-  lift $ src C.$$ CL.consume
+  lift $ C.runConduit $ src C..| CL.consume
 
 -- | Verifies the input's authenticity (i.e. it comes from
 -- Facebook) and integrity by calculating its HMAC-SHA1 (using

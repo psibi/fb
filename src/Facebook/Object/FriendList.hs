@@ -1,5 +1,7 @@
-{-# LANGUAGE DeriveDataTypeable, FlexibleContexts,
-  OverloadedStrings, CPP #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE CPP #-}
 
 module Facebook.Object.FriendList
   ( FriendList(..)

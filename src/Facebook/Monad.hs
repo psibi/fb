@@ -1,8 +1,12 @@
-{-# LANGUAGE CPP, DeriveDataTypeable, FlexibleContexts,
-  FlexibleInstances, GeneralizedNewtypeDeriving,
-  MultiParamTypeClasses, StandaloneDeriving, TypeFamilies,
-  UndecidableInstances #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Facebook.Monad

@@ -1,5 +1,6 @@
-{-# LANGUAGE ConstraintKinds, DeriveDataTypeable, FlexibleContexts,
-  OverloadedStrings #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 
 module Facebook.Pager
   ( Pager(..)

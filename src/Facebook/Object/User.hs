@@ -1,5 +1,6 @@
-{-# LANGUAGE DeriveDataTypeable, FlexibleContexts,
-  OverloadedStrings #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Facebook.Object.User
   ( User(..)

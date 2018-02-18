@@ -1,5 +1,7 @@
-{-# LANGUAGE ConstraintKinds, CPP, DeriveDataTypeable,
-  FlexibleContexts, OverloadedStrings #-}
+{-# LANGUAGE CPP #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Facebook.Graph
   ( getObject
