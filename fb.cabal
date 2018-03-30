@@ -1,8 +1,8 @@
--- This file has been generated from package.yaml by hpack version 0.20.0.
+-- This file has been generated from package.yaml by hpack version 0.21.2.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 6cdcc7bbe1b414ac426e06da9807fe668b27be226182b4a96c6e237a783d6e57
+-- hash: 1f1f3544be4d2d1dbdab5e0286e45bc861f216f4b24d04227e926c4cc51ab272
 
 name:           fb
 version:        1.2.1
@@ -48,6 +48,25 @@ flag debug
   default: False
 
 library
+  exposed-modules:
+      Facebook
+  other-modules:
+      Facebook.Auth
+      Facebook.Base
+      Facebook.FQL
+      Facebook.Graph
+      Facebook.Monad
+      Facebook.Object.Action
+      Facebook.Object.Checkin
+      Facebook.Object.FriendList
+      Facebook.Object.Order
+      Facebook.Object.Page
+      Facebook.Object.User
+      Facebook.Pager
+      Facebook.RealTime
+      Facebook.TestUsers
+      Facebook.Types
+      Paths_fb
   hs-source-dirs:
       src
   ghc-options: -Wall
@@ -80,30 +99,13 @@ library
     , unordered-containers
   if flag(debug)
     cpp-options: -DDEBUG
-  exposed-modules:
-      Facebook
-  other-modules:
-      Facebook.Auth
-      Facebook.Base
-      Facebook.FQL
-      Facebook.Graph
-      Facebook.Monad
-      Facebook.Object.Action
-      Facebook.Object.Checkin
-      Facebook.Object.FriendList
-      Facebook.Object.Order
-      Facebook.Object.Page
-      Facebook.Object.User
-      Facebook.Pager
-      Facebook.RealTime
-      Facebook.TestUsers
-      Facebook.Types
-      Paths_fb
   default-language: Haskell2010
 
 test-suite runtests
   type: exitcode-stdio-1.0
   main-is: Main.hs
+  other-modules:
+      Paths_fb
   hs-source-dirs:
       tests
   ghc-options: -Wall -fno-warn-orphans
@@ -117,13 +119,11 @@ test-suite runtests
     , containers
     , data-default
     , fb
-    , hspec
+    , hspec >=2.5.0
     , http-conduit
     , resourcet
     , text
     , time
     , transformers
     , unliftio
-  other-modules:
-      Paths_fb
   default-language: Haskell2010

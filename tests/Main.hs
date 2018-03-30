@@ -41,7 +41,6 @@ import qualified Test.QuickCheck as QC
 
 import Test.HUnit ((@?=))
 import Test.Hspec
-import Test.Hspec.HUnit ()
 import Test.Hspec.QuickCheck
 
 -- | Grab the Facebook credentials from the environment.

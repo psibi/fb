@@ -90,7 +90,7 @@ tests:
     - containers
     - HUnit
     - QuickCheck
-    - hspec
+    - hspec >= 2.5.0
     - conduit
     - resourcet
     - data-default
