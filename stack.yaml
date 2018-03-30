@@ -8,3 +8,4 @@ extra-deps:
 - resourcet-1.2.0
 - conduit-extra-1.3.0
 - http-conduit-2.3.0
+- cryptohash-cryptoapi-0.1.4
