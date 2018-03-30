@@ -1,5 +1,5 @@
 name: fb
-version: '1.2.0'
+version: '1.2.1'
 synopsis: Bindings to Facebook's API.
 description: ! 'This package exports bindings to Facebook''s APIs (see
 

@@ -5,7 +5,7 @@
 -- hash: 6cdcc7bbe1b414ac426e06da9807fe668b27be226182b4a96c6e237a783d6e57
 
 name:           fb
-version:        1.2.0
+version:        1.2.1
 synopsis:       Bindings to Facebook's API.
 description:    This package exports bindings to Facebook's APIs (see
                 <http://developers.facebook.com/>).  Does not have any external

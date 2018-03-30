@@ -1,3 +1,7 @@
+# Version 1.2.1
+
+* Make it work for ghc-8.4. See [#3](https://github.com/psibi/fb/issues/3)
+
 # Version 1.2.0
 
 * Rewrote fb for conduit-1.3.0
