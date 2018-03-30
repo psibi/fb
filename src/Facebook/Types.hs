@@ -29,7 +29,9 @@ import Control.Applicative ((<$>), (<*>), pure)
 import Control.Monad (mzero)
 import Data.ByteString (ByteString)
 import Data.Int (Int64)
+#if !(MIN_VERSION_base(4,11,0))
 import Data.Monoid (Monoid, mappend)
+#endif
 import Data.String (IsString)
 import Data.Text (Text)
 import Data.Time (UTCTime)
@@ -153,10 +155,12 @@ data AppKind
 type Argument = (ByteString, ByteString)
 
 -- | Synonym for 'mappend'.
+#if !(MIN_VERSION_base(4,11,0))
 (<>)
   :: Monoid a
   => a -> a -> a
 (<>) = mappend
+#endif
 
 ----------------------------------------------------------------------
 -- | /Since 0.14.9./ Not a Facebook JSON format, but a custom @fb@
