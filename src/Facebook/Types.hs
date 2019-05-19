@@ -7,6 +7,7 @@
 
 module Facebook.Types
   ( Credentials(..)
+  , ApiVersion
   , appIdBS
   , appSecretBS
   , AccessToken(..)
@@ -66,6 +67,11 @@ appIdBS = TE.encodeUtf8 . appId
 -- | 'appSecret' for 'ByteString'.
 appSecretBS :: Credentials -> ByteString
 appSecretBS = TE.encodeUtf8 . appSecret
+
+
+-- | Graph API version.
+-- See: https://developers.facebook.com/docs/graph-api/changelog
+type ApiVersion = Text
 
 -- | An access token.  While you can make some API calls without
 -- an access token, many require an access token and some will

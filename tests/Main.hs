@@ -6,15 +6,12 @@ module Main
   , getCredentials
   ) where
 
-import Control.Applicative
 import Control.Monad (mzero)
 import Control.Monad.IO.Class (MonadIO(liftIO))
 import Control.Monad.Trans.Class (lift)
-import Data.Function (on)
 import Data.Int (Int8, Int16, Int32, Int64)
 import Data.Maybe (isJust, isNothing)
 import Data.Text (Text)
-import Data.Time (parseTime)
 import Data.Word (Word, Word8, Word16, Word32, Word64)
 import System.Environment (getEnv)
 import System.Exit (exitFailure)
@@ -31,7 +28,6 @@ import qualified Data.Conduit.List as CL
 import qualified Data.Default as D
 import qualified Data.Map as Map
 import qualified Data.Maybe as M
-import qualified Data.Set as S
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import qualified Data.Time as TI
@@ -42,6 +38,10 @@ import qualified Test.QuickCheck as QC
 import Test.HUnit ((@?=))
 import Test.Hspec
 import Test.Hspec.QuickCheck
+
+
+apiVersion :: FB.ApiVersion
+apiVersion = "v3.2"
 
 -- | Grab the Facebook credentials from the environment.
 getCredentials :: IO FB.Credentials
@@ -83,7 +83,7 @@ invalidCredentials = FB.Credentials "this" "isn't" "valid"
 invalidUserAccessToken :: FB.UserAccessToken
 invalidUserAccessToken = FB.UserAccessToken (FB.Id "invalid") "user" farInTheFuture
   where
-    Just farInTheFuture = parseTime (error "farInTheFuture") "%Y" "3000"
+    Just farInTheFuture = TI.parseTimeM True TI.defaultTimeLocale "%Y" "3000"
 
 -- It's actually important to use 'farInTheFuture' since we
 -- don't want any tests rejecting this invalid user access
@@ -102,15 +102,15 @@ main = do
               "Production tier: "
               creds
               manager
-              (R.runResourceT . FB.runFacebookT creds manager)
-              (R.runResourceT . FB.runNoAuthFacebookT manager)
+              (R.runResourceT . (FB.runFacebookT creds apiVersion manager))
+              (R.runResourceT . (FB.runNoAuthFacebookT apiVersion manager))
             -- ...and the other in Facebook's beta tier.
             facebookTests
               "Beta tier: "
               creds
               manager
-              (R.runResourceT . FB.beta_runFacebookT creds manager)
-              (R.runResourceT . FB.beta_runNoAuthFacebookT manager)
+              (R.runResourceT . (FB.beta_runFacebookT creds apiVersion manager))
+              (R.runResourceT . (FB.beta_runNoAuthFacebookT apiVersion manager))
             -- Tests that don't depend on which tier is chosen.
             libraryTests manager
 
@@ -130,7 +130,7 @@ facebookTests pretitle creds manager runAuth runNoAuth = do
             FB.isValid token #?= True
        it "throws a FacebookException on invalid credentials" $
          R.runResourceT $
-         FB.runFacebookT invalidCredentials manager $
+         FB.runFacebookT invalidCredentials apiVersion manager $
          do ret <- E.try $ FB.getAppAccessToken
             case ret of
               Right token -> fail $ show token
@@ -260,8 +260,8 @@ facebookTests pretitle creds manager runAuth runNoAuth = do
                      []
                      (Just token)
   describe' "fetchAllNextPages" $
-    do let hasAtLeast :: C.Source IO A.Value -> Int -> IO ()
-           src `hasAtLeast` n = src C.$$ go n
+    do let hasAtLeast :: C.ConduitT () A.Value IO () -> Int -> IO ()
+           src `hasAtLeast` n = C.runConduit $ src C..| go n
              where
                go 0 = return ()
                go m = C.await >>= maybe not_ (\_ -> go (m - 1))
@@ -357,7 +357,7 @@ facebookTests pretitle creds manager runAuth runNoAuth = do
               do token <- FB.getAppAccessToken
                  pager <- FB.getTestUsers token
                  src <- FB.fetchAllNextPages pager
-                 oldList <- liftIO $ R.runResourceT $ src C.$$ CL.consume
+                 oldList <- liftIO $ R.runResourceT $ C.runConduit $ src C..| CL.consume
                  withTestUser D.def $
                    \testUser -> do
                      newList <- FB.pagerData <$> FB.getTestUsers token
@@ -434,7 +434,7 @@ libraryTests manager = do
              "eyJhbGdvcml0aG0iOiJITUFDLVNIQTI1NiIsIjAiOiJwYXlsb2FkIn0"
            exampleCreds = FB.Credentials "name" "id" "secret"
            runExampleAuth :: FB.FacebookT FB.Auth (R.ResourceT IO) a -> IO a
-           runExampleAuth = R.runResourceT . FB.runFacebookT exampleCreds manager
+           runExampleAuth = R.runResourceT . FB.runFacebookT exampleCreds apiVersion manager
        it "works for Facebook example" $
          do runExampleAuth $
               do ret <-

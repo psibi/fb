@@ -17,6 +17,7 @@ module Facebook
   , UserAccessToken
   , AppAccessToken
   , AccessTokenData
+  , ApiVersion
   , hasExpired
   , isValid
    -- ** App access token

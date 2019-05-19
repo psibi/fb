@@ -2,6 +2,8 @@
 {-#LANGUAGE FlexibleContexts#-}
 {-#LANGUAGE OverloadedStrings#-}
 {-#LANGUAGE CPP#-}
+{-# LANGUAGE GADTs#-}
+
 module Facebook.Base
     ( fbreq
     , ToSimpleQuery(..)
@@ -12,13 +14,13 @@ module Facebook.Base
     , fbhttp
     , fbhttpHelper
     , httpCheck
-    , apiVersion
     ) where
 
 import Control.Applicative
 import Control.Monad (mzero)
 import Control.Monad.IO.Class (MonadIO)
 import Data.ByteString.Char8 (ByteString)
+import qualified Data.Serialize as Cereal
 import Data.Text (Text)
 import Data.Typeable (Typeable)
 
@@ -47,17 +49,17 @@ import Text.Printf (printf)
 import Facebook.Types
 import Facebook.Monad
 
-apiVersion :: Text
-apiVersion = "v2.8"
-
 -- | A plain 'H.Request' to a Facebook API.  Use this instead of
 -- 'def' when creating new 'H.Request'@s@ for Facebook.
-fbreq :: Monad m =>
-         Text                        -- ^ Path. Should start from "/".
+fbreq :: Monad m
+      => Text                        -- ^ Path. Should start from "/".
       -> Maybe (AccessToken anyKind) -- ^ Access token.
       -> HT.SimpleQuery              -- ^ Parameters.
       -> FacebookT anyAuth m H.Request
-fbreq path mtoken query =
+fbreq path mtoken query = do
+    apiVersion        <- getApiVersion
+    addAppSecretProof <- getAppSecretProofAdder
+
     withTier $ \tier ->
       let host = case tier of
                    Production -> "graph.facebook.com"
@@ -68,8 +70,8 @@ fbreq path mtoken query =
              , H.path          = TE.encodeUtf8 ("/" <> apiVersion <> path)
              , H.redirectCount = 3
              , H.queryString   =
-                 HT.renderSimpleQuery False $
-                 maybe id tsq mtoken query
+                 HT.renderSimpleQuery False
+                 $ addAppSecretProof mtoken $ maybe id tsq mtoken query
 #if MIN_VERSION_http_client(0,5,0)
              , H.responseTimeout = H.responseTimeoutMicro 120000000 -- 2 minutes
 #else

@@ -93,6 +93,7 @@ getUserAccessTokenStep1
   => RedirectUrl -> [Permission] -> FacebookT Auth m Text
 getUserAccessTokenStep1 redirectUrl perms = do
   creds <- getCreds
+  apiVersion <- getApiVersion
   withTier $
     \tier ->
        let urlBase =

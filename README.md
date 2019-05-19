@@ -30,14 +30,18 @@ myCreds =
   { appName = "Your_APP_Name"
   , appId = "your_app_id"
   , appSecret = "xxxxxxxxxxxxxxxxx"
+  , appSecretProofVerification = False
   }
+
+apiVersion :: ApiVersion
+apiVersion = "v2.8"
 
 main :: IO ()
 main = do
   mgr <- newManager tlsManagerSettings
   let redirectUrl = "https://www.yourdomain.com/"
   runResourceT $
-    runFacebookT myCreds mgr $
+    runFacebookT myCreds apiVersion mgr $
     do url1 <- getUserAccessTokenStep1 redirectUrl ["public_profile", "email"]
        liftIO $ print ("Paste the url in browser and get code: " <> url1)
        code <- liftIO $ getLine
