@@ -453,6 +453,18 @@ libraryTests manager = do
                    FB.parseSignedRequest
                      (B.concat [corruptedSig, ".", exampleData])
                  ret &?= (Nothing :: Maybe A.Value)
+
+  describe "addAppSecretProof" $
+    do it "appends appsecret_proof to the query when passing an access token" $
+         let token  = FB.UserAccessToken "id" "token" undefined
+             secret = "secret"
+             query  = [("test","whatever")]
+             secretProofQ creds = FB.makeAppSecretProof creds ( Just token )
+         in
+           do
+             creds <- getCredentials
+             FB.addAppSecretProof creds ( Just token ) query @?= secretProofQ creds <> query
+
   describe "FQLTime" $
     do it "seems to work" $
          do let input = "[1348678357]"

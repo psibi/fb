@@ -26,6 +26,8 @@ module Facebook.Monad
   , getTier
   , withTier
   , getAppSecretProofAdder
+  , addAppSecretProof
+  , makeAppSecretProof
   , runResourceInFb
   , mapFacebookT
    -- * Re-export

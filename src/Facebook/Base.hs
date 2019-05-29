@@ -56,7 +56,7 @@ fbreq :: Monad m
       -> FacebookT anyAuth m H.Request
 fbreq path mtoken query = do
     apiVersion        <- getApiVersion
-    addAppSecretProof <- getAppSecretProofAdder
+    appSecretProofAdder <- getAppSecretProofAdder
 
     withTier $ \tier ->
       let host = case tier of
@@ -69,7 +69,7 @@ fbreq path mtoken query = do
              , H.redirectCount = 3
              , H.queryString   =
                  HT.renderSimpleQuery False
-                 $ addAppSecretProof mtoken $ maybe id tsq mtoken query
+                 $ appSecretProofAdder mtoken $ maybe id tsq mtoken query
 #if MIN_VERSION_http_client(0,5,0)
              , H.responseTimeout = H.responseTimeoutMicro 120000000 -- 2 minutes
 #else

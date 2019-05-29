@@ -35,6 +35,8 @@ module Facebook
   , DebugToken(..)
    -- ** Signed requests
   , parseSignedRequest
+  , addAppSecretProof
+  , makeAppSecretProof
    -- * Facebook's Graph API
    -- ** User
   , User(..)
