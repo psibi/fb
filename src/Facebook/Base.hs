@@ -2,7 +2,6 @@
 {-#LANGUAGE FlexibleContexts#-}
 {-#LANGUAGE OverloadedStrings#-}
 {-#LANGUAGE CPP#-}
-{-# LANGUAGE GADTs#-}
 
 module Facebook.Base
     ( fbreq
@@ -20,7 +19,6 @@ import Control.Applicative
 import Control.Monad (mzero)
 import Control.Monad.IO.Class (MonadIO)
 import Data.ByteString.Char8 (ByteString)
-import qualified Data.Serialize as Cereal
 import Data.Text (Text)
 import Data.Typeable (Typeable)
 

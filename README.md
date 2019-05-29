@@ -30,7 +30,6 @@ myCreds =
   { appName = "Your_APP_Name"
   , appId = "your_app_id"
   , appSecret = "xxxxxxxxxxxxxxxxx"
-  , appSecretProofVerification = False
   }
 
 apiVersion :: ApiVersion
