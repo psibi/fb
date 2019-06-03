@@ -58,6 +58,7 @@ data Credentials = Credentials
   { appName :: Text -- ^ Your application name (e.g. for Open Graph calls).
   , appId :: Text -- ^ Your application ID.
   , appSecret :: Text -- ^ Your application secret key.
+  , appSecretProof :: Bool -- ^ To enable app secret proof verification
   } deriving (Eq, Ord, Show, Read, Typeable)
 
 -- | 'appId' for 'ByteString'.

@@ -126,7 +126,7 @@ getSubscriptionsPath
   :: Monad m
   => FacebookT Auth m Text
 getSubscriptionsPath = do
-  creds <- getCreds
+  Just creds <- getCreds
   return $ T.concat ["/", appId creds, "/subscriptions"]
 
 -- | Information returned by Facebook about a real-time update
@@ -170,7 +170,7 @@ verifyRealTimeUpdateNotifications
      -- ^ Request body with JSON-encoded notifications.
   -> FacebookT Auth m (Maybe L.ByteString)
 verifyRealTimeUpdateNotifications sig body = do
-  creds <- getCreds
+  Just creds <- getCreds
   let key :: Crypto.MacKey ctx SHA1
       key = Crypto.MacKey (appSecretBS creds)
       hash = Crypto.hmac key body

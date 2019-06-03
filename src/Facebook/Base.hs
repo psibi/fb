@@ -55,8 +55,14 @@ fbreq :: Monad m
       -> HT.SimpleQuery              -- ^ Parameters.
       -> FacebookT anyAuth m H.Request
 fbreq path mtoken query = do
-    apiVersion        <- getApiVersion
-    appSecretProofAdder <- getAppSecretProofAdder
+
+    apiVersion <- getApiVersion
+    creds      <- getCreds
+
+    let appSecretProofAdder = case creds of
+          Just c@( Credentials _ _ _ True ) -> addAppSecretProof c
+          _ -> const id 
+
 
     withTier $ \tier ->
       let host = case tier of

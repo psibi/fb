@@ -100,7 +100,7 @@ createTestUser
   -> AppAccessToken -- ^ Access token for your app.
   -> FacebookT Auth m TestUser
 createTestUser userInfo token = do
-  creds <- getCreds
+  Just creds <- getCreds
   let query = ("method", "post") : createTestUserQueryArgs userInfo
   getObject ("/" <> appId creds <> "/accounts/test-users") query (Just token)
 
@@ -110,14 +110,14 @@ getTestUsers
   => AppAccessToken -- ^ Access token for your app.
   -> FacebookT Auth m (Pager TestUser)
 getTestUsers token = do
-  creds <- getCreds
+  Just creds <- getCreds
   getObject ("/" <> appId creds <> "/accounts/test-users") [] (Just token)
 
 disassociateTestuser
   :: (R.MonadUnliftIO m, R.MonadThrow m, R.MonadResource m)
   => TestUser -> AppAccessToken -> FacebookT Auth m Bool
 disassociateTestuser testUser _token = do
-  creds <- getCreds
+  Just creds <- getCreds
   getObjectBool
     ("/" <> (appId creds) <> "/accounts/test-users")
     [("uid", encodeUtf8 $ idCode $ tuId testUser), ("method", "delete")]

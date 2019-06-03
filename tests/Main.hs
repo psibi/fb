@@ -50,7 +50,7 @@ getCredentials = tryToGet `E.catch` showHelp
     tryToGet = do
       [appName, appId, appSecret] <-
         mapM getEnv ["APP_NAME", "APP_ID", "APP_SECRET"]
-      return $ FB.Credentials (T.pack appName) (T.pack appId) (T.pack appSecret)
+      return $ FB.Credentials (T.pack appName) (T.pack appId) (T.pack appSecret) True
     showHelp exc
       | not (isDoesNotExistError exc) = E.throwIO exc
     showHelp _ = do
@@ -78,7 +78,7 @@ getCredentials = tryToGet `E.catch` showHelp
       exitFailure
 
 invalidCredentials :: FB.Credentials
-invalidCredentials = FB.Credentials "this" "isn't" "valid"
+invalidCredentials = FB.Credentials "this" "isn't" "valid" False
 
 invalidUserAccessToken :: FB.UserAccessToken
 invalidUserAccessToken = FB.UserAccessToken (FB.Id "invalid") "user" farInTheFuture
@@ -318,7 +318,7 @@ facebookTests pretitle creds manager runAuth runNoAuth = do
                  -- Check user attributes
                  FB.userId createdUser &?= FB.tuId newTestUser
                  FB.userName createdUser &?= Just "Gabriel"
-                 -- FB.userLocale createdUser &?= Just "en_US"   -- fix this test later
+                 FB.userLocale createdUser &?= Just "en_US"   -- fix this test later
                  -- Check if the token is valid
                  FB.isValid newTestUserToken #?= False
                  removed &?= True
@@ -432,7 +432,7 @@ libraryTests manager = do
            exampleSig = "vlXgu64BQGFSQrY0ZcJBZASMvYvTHu9GQ0YM9rjPSso"
            exampleData =
              "eyJhbGdvcml0aG0iOiJITUFDLVNIQTI1NiIsIjAiOiJwYXlsb2FkIn0"
-           exampleCreds = FB.Credentials "name" "id" "secret"
+           exampleCreds = FB.Credentials "name" "id" "secret" False
            runExampleAuth :: FB.FacebookT FB.Auth (R.ResourceT IO) a -> IO a
            runExampleAuth = R.runResourceT . FB.runFacebookT exampleCreds apiVersion manager
        it "works for Facebook example" $
@@ -457,7 +457,6 @@ libraryTests manager = do
   describe "addAppSecretProof" $
     do it "appends appsecret_proof to the query when passing an access token" $
          let token  = FB.UserAccessToken "id" "token" undefined
-             secret = "secret"
              query  = [("test","whatever")]
              secretProofQ creds = FB.makeAppSecretProof creds ( Just token )
          in

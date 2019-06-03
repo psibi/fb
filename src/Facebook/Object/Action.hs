@@ -38,7 +38,7 @@ createAction
   -> UserAccessToken -- ^ Required user access token.
   -> FacebookT Auth m Id
 createAction (Action action) query mapptoken usertoken = do
-  creds <- getCreds
+  Just creds <- getCreds
   let post
         :: (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m)
         => Text -> AccessToken anyKind -> FacebookT Auth m Id
