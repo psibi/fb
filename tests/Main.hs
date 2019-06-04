@@ -456,13 +456,14 @@ libraryTests manager = do
 
   describe "addAppSecretProof" $
     do it "appends appsecret_proof to the query when passing an access token" $
-         let token  = FB.UserAccessToken "id" "token" undefined
-             query  = [("test","whatever")]
-             secretProofQ creds = FB.makeAppSecretProof creds ( Just token )
-         in
-           do
-             creds <- getCredentials
-             FB.addAppSecretProof creds ( Just token ) query @?= secretProofQ creds <> query
+         do
+            now <- liftIO TI.getCurrentTime
+            let token = FB.UserAccessToken "id" "token" now
+                query = [("test","whatever")]
+                secretProofQ creds = FB.makeAppSecretProof creds ( Just token )
+
+            creds <- getCredentials
+            FB.addAppSecretProof creds ( Just token ) query @?= secretProofQ creds <> query
 
   describe "FQLTime" $
     do it "seems to work" $
