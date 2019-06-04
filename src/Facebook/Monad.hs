@@ -107,7 +107,7 @@ data NoAuth
 
 -- | Internal data kept inside 'FacebookT'.
 data FbData = FbData
-  { fbdCreds :: Maybe Credentials -- ^ Can be 'undefined'!
+  { fbdCreds :: Maybe Credentials
   , fbdManager :: !H.Manager
   , fbdTier :: !FbTier
   , fbdApiVersion :: !ApiVersion
