@@ -57,7 +57,7 @@ fbreq :: Monad m
 fbreq path mtoken query = do
 
     apiVersion <- getApiVersion
-    creds      <- getCreds
+    creds      <- getMCreds
 
     let appSecretProofAdder = case creds of
           Just c@( Credentials _ _ _ True ) -> addAppSecretProof c
