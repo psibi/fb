@@ -21,6 +21,7 @@ module Facebook.Monad
   , beta_runNoAuthFacebookT
   , getApiVersion
   , getCreds
+  , getMCreds
   , getManager
   , getTier
   , withTier
@@ -41,6 +42,7 @@ import Control.Monad.Logger (MonadLogger(..))
 import Control.Monad.Trans.Class (MonadTrans(lift))
 import UnliftIO
 import Control.Monad.Trans.Reader (ReaderT(..), ask, mapReaderT)
+import qualified UnliftIO.Exception as E
 import Data.Typeable (Typeable)
 import qualified Control.Monad.Trans.Resource as R
 
@@ -178,11 +180,21 @@ beta_runNoAuthFacebookT :: ApiVersion -> H.Manager -> FacebookT NoAuth m a -> m 
 beta_runNoAuthFacebookT apiVersion manager (F act) =
   runReaderT act (FbData Nothing manager Beta apiVersion)
 
--- | Get the user's credentials.
+-- | Get the user's credentials, fail if they are not available.
 getCreds
   :: Monad m
+  => FacebookT Auth m Credentials
+getCreds = do
+   mCreds <- getMCreds
+   case mCreds of
+     Nothing -> E.throwIO $ FbLibraryException "Couldn't get credentials."
+     Just creds -> return creds
+
+-- | Get the user's credentials.
+getMCreds
+  :: Monad m
   => FacebookT anyAuth m (Maybe Credentials)
-getCreds = fbdCreds `liftM` F ask
+getMCreds = fbdCreds `liftM` F ask
 
 -- | Get the Graph API version.
 getApiVersion

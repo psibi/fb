@@ -63,7 +63,7 @@ getAppAccessToken
   => FacebookT Auth m AppAccessToken
 getAppAccessToken =
   runResourceInFb $
-  do Just creds <- getCreds
+  do creds <- getCreds
      req <-
        fbreq "/oauth/access_token" Nothing $
        tsq creds [("grant_type", "client_credentials")]
@@ -92,7 +92,7 @@ getUserAccessTokenStep1
   :: Monad m
   => RedirectUrl -> [Permission] -> FacebookT Auth m Text
 getUserAccessTokenStep1 redirectUrl perms = do
-  Just creds <- getCreds
+  creds <- getCreds
   apiVersion <- getApiVersion
   withTier $
     \tier ->
@@ -132,7 +132,7 @@ getUserAccessTokenStep2 redirectUrl query =
       runResourceInFb $
       -- Get the access token data through Facebook's OAuth.
       do now <- liftIO getCurrentTime
-         Just creds <- getCreds
+         creds <- getCreds
          req <-
            fbreq "/oauth/access_token" Nothing $
            tsq creds [code, ("redirect_uri", TE.encodeUtf8 redirectUrl)]
@@ -309,7 +309,7 @@ extendUserAccessToken token@(UserAccessToken uid data_ _) = do
   where
     tryToExtend =
       runResourceInFb $
-      do Just creds <- getCreds
+      do creds <- getCreds
          req <-
            fbreq "/oauth/access_token" Nothing $
            tsq
@@ -352,7 +352,7 @@ parseSignedRequest signedRequest =
      -- Verify signature
      SignedRequestAlgorithm algo <- fromJson payload
      guard (algo == "HMAC-SHA256")
-     Just creds <- lift getCreds
+     creds <- lift getCreds
      let hmacKey = credsToHmacKey creds
          expectedSignature = Cereal.encode $ hmac' hmacKey encodedUnparsedPayload
      guard (signature `constTimeEq` expectedSignature)
