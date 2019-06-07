@@ -182,7 +182,7 @@ beta_runNoAuthFacebookT apiVersion manager (F act) =
 
 -- | Get the user's credentials, fail if they are not available.
 getCreds
-  :: Monad m
+  :: (Monad m, MonadIO m)
   => FacebookT Auth m Credentials
 getCreds = do
    mCreds <- getMCreds
