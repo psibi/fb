@@ -57,7 +57,7 @@ fbreq :: Monad m
 fbreq path mtoken query = do
 
     apiVersion <- getApiVersion
-    creds      <- getMCreds
+    creds      <- getCreds
 
     let appSecretProofAdder = case creds of
           Just c@( Credentials _ _ _ True ) -> addAppSecretProof c
@@ -132,26 +132,6 @@ asBS :: (Monad m) =>
         H.Response (C.ConduitT () ByteString m ())
      -> FacebookT anyAuth m ByteString
 asBS response = lift $ C.runConduit $ H.responseBody response .| fmap B.concat CL.consume
-
-
--- | An exception that may be thrown by functions on this
--- package.  Includes any information provided by Facebook.
-data FacebookException =
-    -- | An exception coming from Facebook.
-    FacebookException { fbeType    :: Text
-                      , fbeMessage :: Text
-                      }
-    -- | An exception coming from the @fb@ package's code.
-  | FbLibraryException { fbeMessage :: Text }
-    deriving (Eq, Ord, Show, Read, Typeable)
-
-instance A.FromJSON FacebookException where
-    parseJSON (A.Object v) =
-        FacebookException <$> v A..: "type"
-                          <*> v A..: "message"
-    parseJSON _ = mzero
-
-instance E.Exception FacebookException where
 
 
 -- | Same as 'H.http', but tries to parse errors and throw

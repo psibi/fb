@@ -24,10 +24,12 @@ module Facebook.Types
   , Argument
   , (<>)
   , FbUTCTime(..)
+  , FacebookException(..)
   ) where
 
 import Control.Applicative ((<$>), (<*>), pure)
 import Control.Monad (mzero)
+import qualified UnliftIO.Exception as E
 import Data.ByteString (ByteString)
 import Data.Int (Int64)
 #if !(MIN_VERSION_base(4,11,0))
@@ -241,3 +243,23 @@ instance A.FromJSON FbUTCTime where
   parseJSON _ =
     fail
       "could not parse FbUTCTime from something which is not a string or number"
+
+-- | An exception that may be thrown by functions on this
+-- package.  Includes any information provided by Facebook.
+data FacebookException =
+    -- | An exception coming from Facebook.
+    FacebookException { fbeType    :: Text
+                      , fbeMessage :: Text
+                      }
+    -- | An exception coming from the @fb@ package's code.
+  | FbLibraryException { fbeMessage :: Text }
+    deriving (Eq, Ord, Show, Read, Typeable)
+
+instance A.FromJSON FacebookException where
+    parseJSON (A.Object v) =
+        FacebookException <$> v A..: "type"
+                          <*> v A..: "message"
+    parseJSON _ = mzero
+
+instance E.Exception FacebookException where
+
