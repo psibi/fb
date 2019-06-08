@@ -16,11 +16,9 @@ module Facebook.Base
     ) where
 
 import Control.Applicative
-import Control.Monad (mzero)
 import Control.Monad.IO.Class (MonadIO)
 import Data.ByteString.Char8 (ByteString)
 import Data.Text (Text)
-import Data.Typeable (Typeable)
 
 import qualified UnliftIO.Exception as E
 import Control.Monad.Trans.Class (MonadTrans)

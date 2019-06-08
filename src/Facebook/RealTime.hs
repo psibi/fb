@@ -17,6 +17,7 @@ module Facebook.RealTime
 
 import Control.Applicative ((<$>), (<*>))
 import Control.Monad (liftM, mzero, void)
+import Control.Monad.IO.Class
 import Crypto.Hash.CryptoAPI (SHA1)
 import Data.ByteString.Char8 (ByteString)
 import Data.Text (Text)
@@ -123,7 +124,7 @@ modifySubscription object fields callbackUrl verifyToken apptoken = do
 
 -- | (Internal)  Get the subscription's path.
 getSubscriptionsPath
-  :: Monad m
+  :: (Monad m, MonadIO m)
   => FacebookT Auth m Text
 getSubscriptionsPath = do
   creds <- getCreds
@@ -155,7 +156,7 @@ listSubscriptions apptoken = do
   src <- fetchAllNextPages pager
   lift $ C.runConduit $ src C..| CL.consume
 
--- | Verifies the input's authenticity (i.e. it comes from
+-- | Verifi(es the input's authenticity (i.e. it comes from, MonadIO m)
 -- Facebook) and integrity by calculating its HMAC-SHA1 (using
 -- your application secret as the key) and verifying that it
 -- matches the value from the HTTP request's @X-Hub-Signature@
@@ -163,7 +164,7 @@ listSubscriptions apptoken = do
 -- otherwise @Just data@ is returned where @data@ is the original
 -- data.
 verifyRealTimeUpdateNotifications
-  :: Monad m
+  :: (Monad m, MonadIO m)
   => ByteString
      -- ^ @X-Hub-Signature@ HTTP header's value.
   -> L.ByteString
@@ -186,7 +187,7 @@ verifyRealTimeUpdateNotifications sig body = do
 -- 'verifyRealTimeUpdateNotifications' if you need to distinguish
 -- between these two error conditions).
 getRealTimeUpdateNotifications
-  :: (Monad m, A.FromJSON a)
+  :: (Monad m, A.FromJSON a, MonadIO m)
   => ByteString
      -- ^ @X-Hub-Signature@ HTTP header's value.
   -> L.ByteString

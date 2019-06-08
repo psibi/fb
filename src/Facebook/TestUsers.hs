@@ -16,6 +16,7 @@ module Facebook.TestUsers
 
 import Control.Applicative ((<$>), (<*>))
 import Control.Monad (unless, mzero)
+import Control.Monad.IO.Class
 import Data.ByteString.Lazy (fromStrict)
 import Data.Default
 import Data.Text
@@ -94,7 +95,7 @@ createTestUserQueryArgs (CreateTestUser installed name locale) =
 -- | Create a new test user.
 -- Ref: https://developers.facebook.com/docs/graph-api/reference/v2.8/app/accounts/test-users#publish
 createTestUser
-  :: (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m)
+  :: (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m, MonadIO m)
   => CreateTestUser -- ^ How the test user should be
      -- created.
   -> AppAccessToken -- ^ Access token for your app.
@@ -106,7 +107,7 @@ createTestUser userInfo token = do
 
 -- | Get a list of test users.
 getTestUsers
-  :: (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m)
+  :: (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m, MonadIO m)
   => AppAccessToken -- ^ Access token for your app.
   -> FacebookT Auth m (Pager TestUser)
 getTestUsers token = do
@@ -114,7 +115,7 @@ getTestUsers token = do
   getObject ("/" <> appId creds <> "/accounts/test-users") [] (Just token)
 
 disassociateTestuser
-  :: (R.MonadUnliftIO m, R.MonadThrow m, R.MonadResource m)
+  :: (R.MonadUnliftIO m, R.MonadThrow m, R.MonadResource m, MonadIO m)
   => TestUser -> AppAccessToken -> FacebookT Auth m Bool
 disassociateTestuser testUser _token = do
   creds <- getCreds
