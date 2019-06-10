@@ -2,6 +2,7 @@
 {-#LANGUAGE FlexibleContexts#-}
 {-#LANGUAGE OverloadedStrings#-}
 {-#LANGUAGE CPP#-}
+
 module Facebook.Base
     ( fbreq
     , ToSimpleQuery(..)
@@ -12,15 +13,12 @@ module Facebook.Base
     , fbhttp
     , fbhttpHelper
     , httpCheck
-    , apiVersion
     ) where
 
 import Control.Applicative
-import Control.Monad (mzero)
 import Control.Monad.IO.Class (MonadIO)
 import Data.ByteString.Char8 (ByteString)
 import Data.Text (Text)
-import Data.Typeable (Typeable)
 
 import qualified UnliftIO.Exception as E
 import Control.Monad.Trans.Class (MonadTrans)
@@ -47,17 +45,23 @@ import Text.Printf (printf)
 import Facebook.Types
 import Facebook.Monad
 
-apiVersion :: Text
-apiVersion = "v2.8"
-
 -- | A plain 'H.Request' to a Facebook API.  Use this instead of
 -- 'def' when creating new 'H.Request'@s@ for Facebook.
-fbreq :: Monad m =>
-         Text                        -- ^ Path. Should start from "/".
+fbreq :: Monad m
+      => Text                        -- ^ Path. Should start from "/".
       -> Maybe (AccessToken anyKind) -- ^ Access token.
       -> HT.SimpleQuery              -- ^ Parameters.
       -> FacebookT anyAuth m H.Request
-fbreq path mtoken query =
+fbreq path mtoken query = do
+
+    apiVersion <- getApiVersion
+    creds      <- getMCreds
+
+    let appSecretProofAdder = case creds of
+          Just c@( Credentials _ _ _ True ) -> addAppSecretProof c
+          _ -> const id 
+
+
     withTier $ \tier ->
       let host = case tier of
                    Production -> "graph.facebook.com"
@@ -68,8 +72,8 @@ fbreq path mtoken query =
              , H.path          = TE.encodeUtf8 ("/" <> apiVersion <> path)
              , H.redirectCount = 3
              , H.queryString   =
-                 HT.renderSimpleQuery False $
-                 maybe id tsq mtoken query
+                 HT.renderSimpleQuery False
+                 $ appSecretProofAdder mtoken $ maybe id tsq mtoken query
 #if MIN_VERSION_http_client(0,5,0)
              , H.responseTimeout = H.responseTimeoutMicro 120000000 -- 2 minutes
 #else
@@ -126,26 +130,6 @@ asBS :: (Monad m) =>
         H.Response (C.ConduitT () ByteString m ())
      -> FacebookT anyAuth m ByteString
 asBS response = lift $ C.runConduit $ H.responseBody response .| fmap B.concat CL.consume
-
-
--- | An exception that may be thrown by functions on this
--- package.  Includes any information provided by Facebook.
-data FacebookException =
-    -- | An exception coming from Facebook.
-    FacebookException { fbeType    :: Text
-                      , fbeMessage :: Text
-                      }
-    -- | An exception coming from the @fb@ package's code.
-  | FbLibraryException { fbeMessage :: Text }
-    deriving (Eq, Ord, Show, Read, Typeable)
-
-instance A.FromJSON FacebookException where
-    parseJSON (A.Object v) =
-        FacebookException <$> v A..: "type"
-                          <*> v A..: "message"
-    parseJSON _ = mzero
-
-instance E.Exception FacebookException where
 
 
 -- | Same as 'H.http', but tries to parse errors and throw

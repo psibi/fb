@@ -8,6 +8,7 @@ module Facebook.Object.Action
   ) where
 
 import Control.Arrow (first)
+import Control.Monad.IO.Class
 import Data.Function (on)
 import Data.String (IsString(..))
 import Data.Text (Text)
@@ -27,7 +28,7 @@ import Facebook.Graph
 -- >              , "when"   #= now ]
 -- >              token
 createAction
-  :: (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m)
+  :: (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m, MonadIO m)
   => Action -- ^ Action kind to be created.
   -> [Argument] -- ^ Arguments of the action.
   -> Maybe AppAccessToken

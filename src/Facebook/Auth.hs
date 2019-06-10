@@ -22,8 +22,8 @@ module Facebook.Auth
 #if __GLASGOW_HASKELL__ <= 784
 import Control.Applicative
 #endif
-import Control.Monad (guard, liftM, mzero)
-import Control.Monad.IO.Class (MonadIO(liftIO))
+import Control.Monad (guard, mzero)
+import Control.Monad.IO.Class
 import Control.Monad.Trans.Maybe (MaybeT(..))
 import Crypto.Classes (constTimeEq)
 import Crypto.Hash.CryptoAPI (SHA256)
@@ -32,8 +32,8 @@ import Data.Aeson ((.:))
 import Data.Aeson.Parser (json')
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
-import Data.Time (getCurrentTime, addUTCTime, UTCTime)
 import Data.Typeable (Typeable)
+import Data.Time (getCurrentTime, addUTCTime, UTCTime)
 import Data.String (IsString(..))
 
 import qualified UnliftIO.Exception as E
@@ -59,7 +59,7 @@ import Facebook.Monad
 -- credentials.
 -- Ref: https://developers.facebook.com/docs/facebook-login/manually-build-a-login-flow
 getAppAccessToken
-  :: (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m)
+  :: (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m, MonadIO m)
   => FacebookT Auth m AppAccessToken
 getAppAccessToken =
   runResourceInFb $
@@ -89,10 +89,11 @@ getAppAccessToken =
 -- authenticate the user, authorize your app and then redirect
 -- the user back into the provider 'RedirectUrl'.
 getUserAccessTokenStep1
-  :: Monad m
+  :: (Monad m, MonadIO m)
   => RedirectUrl -> [Permission] -> FacebookT Auth m Text
 getUserAccessTokenStep1 redirectUrl perms = do
   creds <- getCreds
+  apiVersion <- getApiVersion
   withTier $
     \tier ->
        let urlBase =
@@ -120,7 +121,7 @@ getUserAccessTokenStep1 redirectUrl perms = do
 -- to this function that will complete the user authentication
 -- flow and give you an @'UserAccessToken'@.
 getUserAccessTokenStep2
-  :: (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m)
+  :: (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m, MonadIO m)
   => RedirectUrl -- ^ Should be exactly the same
      -- as in 'getUserAccessTokenStep1'.
   -> [Argument] -- ^ Query parameters.
@@ -297,7 +298,7 @@ isValid token = do
 -- can't assume this).  Note that expired access tokens can't be
 -- extended, only valid tokens.
 extendUserAccessToken
-  :: (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m)
+  :: (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m, MonadIO m)
   => UserAccessToken
   -> FacebookT Auth m (Either FacebookException UserAccessToken)
 extendUserAccessToken token@(UserAccessToken uid data_ _) = do
@@ -336,7 +337,7 @@ extendUserAccessToken token@(UserAccessToken uid data_ _) = do
 -- verifies its authencity and integrity using the HMAC and
 -- decodes its JSON object.
 parseSignedRequest
-  :: (AE.FromJSON a, Monad m)
+  :: (AE.FromJSON a, Monad m, MonadIO m)
   => B8.ByteString -- ^ Encoded Facebook signed request
   -> FacebookT Auth m (Maybe a)
 parseSignedRequest signedRequest =
@@ -351,8 +352,9 @@ parseSignedRequest signedRequest =
      -- Verify signature
      SignedRequestAlgorithm algo <- fromJson payload
      guard (algo == "HMAC-SHA256")
-     hmacKey <- credsToHmacKey `liftM` lift getCreds
-     let expectedSignature = Cereal.encode $ hmac' hmacKey encodedUnparsedPayload
+     creds <- lift getCreds
+     let hmacKey = credsToHmacKey creds
+         expectedSignature = Cereal.encode $ hmac' hmacKey encodedUnparsedPayload
      guard (signature `constTimeEq` expectedSignature)
      -- Parse user data type
      fromJson payload

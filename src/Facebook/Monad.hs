@@ -8,6 +8,7 @@
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 module Facebook.Monad
   ( FacebookT
@@ -18,10 +19,14 @@ module Facebook.Monad
   , runNoAuthFacebookT
   , beta_runFacebookT
   , beta_runNoAuthFacebookT
+  , getApiVersion
   , getCreds
+  , getMCreds
   , getManager
   , getTier
   , withTier
+  , addAppSecretProof
+  , makeAppSecretProof
   , runResourceInFb
   , mapFacebookT
    -- * Re-export
@@ -37,10 +42,18 @@ import Control.Monad.Logger (MonadLogger(..))
 import Control.Monad.Trans.Class (MonadTrans(lift))
 import UnliftIO
 import Control.Monad.Trans.Reader (ReaderT(..), ask, mapReaderT)
+import qualified UnliftIO.Exception as E
 import Data.Typeable (Typeable)
 import qualified Control.Monad.Trans.Resource as R
 
+import Crypto.Hash.CryptoAPI (SHA256)
+import Crypto.HMAC (hmac', MacKey(..))
+import qualified Data.Serialize as Cereal
+import qualified Data.Text.Encoding as TE
+
+
 import qualified Network.HTTP.Conduit as H
+import qualified Network.HTTP.Types as HT
 
 import Facebook.Types
 
@@ -96,9 +109,10 @@ data NoAuth
 
 -- | Internal data kept inside 'FacebookT'.
 data FbData = FbData
-  { fbdCreds :: Credentials -- ^ Can be 'undefined'!
+  { fbdCreds :: Maybe Credentials
   , fbdManager :: !H.Manager
   , fbdTier :: !FbTier
+  , fbdApiVersion :: !ApiVersion
   } deriving (Typeable)
 
 -- | Which Facebook tier should be used (see
@@ -112,37 +126,81 @@ data FbTier
 -- your credentials.
 runFacebookT
   :: Credentials -- ^ Your app's credentials.
+  -> ApiVersion -- ^ Api version
   -> H.Manager -- ^ Connection manager (see 'H.withManager').
   -> FacebookT Auth m a
   -> m a
-runFacebookT creds manager (F act) =
-  runReaderT act (FbData creds manager Production)
+runFacebookT creds apiVersion manager (F act) =
+  runReaderT act (FbData ( Just creds ) manager Production apiVersion)
+
+
+addAppSecretProof :: Credentials
+                  -> Maybe (AccessToken anykind)
+                  -> HT.SimpleQuery
+                  -> HT.SimpleQuery
+addAppSecretProof ( Credentials _ _ _ False ) _ query = query
+addAppSecretProof creds mtoken query = makeAppSecretProof creds mtoken <> query
+
+-- | Make an appsecret_proof in case the given credentials access token is a
+-- user access token.
+-- See: https://developers.facebook.com/docs/graph-api/securing-requests/#appsecret_proof
+makeAppSecretProof
+  :: Credentials -- ^ App credentials
+  -> Maybe ( AccessToken anyKind ) -- ^
+  -> HT.SimpleQuery
+makeAppSecretProof creds (Just ( UserAccessToken _ accessToken _ ))
+  = [( TE.encodeUtf8 "appsecret_proof", proof)]
+
+  where
+    key :: MacKey ctx SHA256
+    key   = MacKey $ appSecretBS creds
+    proof = Cereal.encode $ hmac' key ( TE.encodeUtf8 accessToken )
+makeAppSecretProof  _ _ = []
+
 
 -- | Run a computation in the 'FacebookT' monad without
 -- credentials.
-runNoAuthFacebookT :: H.Manager -> FacebookT NoAuth m a -> m a
-runNoAuthFacebookT manager (F act) =
-  let creds = error "runNoAuthFacebookT: never here, serious bug"
-  in runReaderT act (FbData creds manager Production)
+runNoAuthFacebookT
+  :: ApiVersion -- ^ Api version
+  -> H.Manager -- ^ Connection manager (see 'H.withManager').
+  -> FacebookT NoAuth m a -> m a
+runNoAuthFacebookT apiVersion manager (F act) =
+  runReaderT act (FbData Nothing manager Production apiVersion)
+
 
 -- | Same as 'runFacebookT', but uses Facebook's beta tier (see
 -- <https://developers.facebook.com/support/beta-tier/>).
-beta_runFacebookT :: Credentials -> H.Manager -> FacebookT Auth m a -> m a
-beta_runFacebookT creds manager (F act) =
-  runReaderT act (FbData creds manager Beta)
+beta_runFacebookT :: Credentials -> ApiVersion -> H.Manager -> FacebookT Auth m a -> m a
+beta_runFacebookT creds apiVersion manager (F act) =
+  runReaderT act (FbData (Just creds) manager Beta apiVersion)
 
 -- | Same as 'runNoAuthFacebookT', but uses Facebook's beta tier
 -- (see <https://developers.facebook.com/support/beta-tier/>).
-beta_runNoAuthFacebookT :: H.Manager -> FacebookT NoAuth m a -> m a
-beta_runNoAuthFacebookT manager (F act) =
-  let creds = error "beta_runNoAuthFacebookT: never here, serious bug"
-  in runReaderT act (FbData creds manager Beta)
+beta_runNoAuthFacebookT :: ApiVersion -> H.Manager -> FacebookT NoAuth m a -> m a
+beta_runNoAuthFacebookT apiVersion manager (F act) =
+  runReaderT act (FbData Nothing manager Beta apiVersion)
+
+-- | Get the user's credentials, fail if they are not available.
+getCreds
+  :: (Monad m, MonadIO m)
+  => FacebookT Auth m Credentials
+getCreds = do
+   mCreds <- getMCreds
+   case mCreds of
+     Nothing -> E.throwIO $ FbLibraryException "Couldn't get credentials."
+     Just creds -> return creds
 
 -- | Get the user's credentials.
-getCreds
+getMCreds
   :: Monad m
-  => FacebookT Auth m Credentials
-getCreds = fbdCreds `liftM` F ask
+  => FacebookT anyAuth m (Maybe Credentials)
+getMCreds = fbdCreds `liftM` F ask
+
+-- | Get the Graph API version.
+getApiVersion
+  :: Monad m
+  => FacebookT anyAuth m ApiVersion
+getApiVersion = fbdApiVersion `liftM` F ask
 
 -- | Get the 'H.Manager'.
 getManager

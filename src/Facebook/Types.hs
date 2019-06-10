@@ -7,6 +7,7 @@
 
 module Facebook.Types
   ( Credentials(..)
+  , ApiVersion
   , appIdBS
   , appSecretBS
   , AccessToken(..)
@@ -23,10 +24,12 @@ module Facebook.Types
   , Argument
   , (<>)
   , FbUTCTime(..)
+  , FacebookException(..)
   ) where
 
 import Control.Applicative ((<$>), (<*>), pure)
 import Control.Monad (mzero)
+import qualified UnliftIO.Exception as E
 import Data.ByteString (ByteString)
 import Data.Int (Int64)
 #if !(MIN_VERSION_base(4,11,0))
@@ -57,6 +60,7 @@ data Credentials = Credentials
   { appName :: Text -- ^ Your application name (e.g. for Open Graph calls).
   , appId :: Text -- ^ Your application ID.
   , appSecret :: Text -- ^ Your application secret key.
+  , appSecretProof :: Bool -- ^ To enable app secret proof verification
   } deriving (Eq, Ord, Show, Read, Typeable)
 
 -- | 'appId' for 'ByteString'.
@@ -66,6 +70,11 @@ appIdBS = TE.encodeUtf8 . appId
 -- | 'appSecret' for 'ByteString'.
 appSecretBS :: Credentials -> ByteString
 appSecretBS = TE.encodeUtf8 . appSecret
+
+
+-- | Graph API version.
+-- See: https://developers.facebook.com/docs/graph-api/changelog
+type ApiVersion = Text
 
 -- | An access token.  While you can make some API calls without
 -- an access token, many require an access token and some will
@@ -234,3 +243,23 @@ instance A.FromJSON FbUTCTime where
   parseJSON _ =
     fail
       "could not parse FbUTCTime from something which is not a string or number"
+
+-- | An exception that may be thrown by functions on this
+-- package.  Includes any information provided by Facebook.
+data FacebookException =
+    -- | An exception coming from Facebook.
+    FacebookException { fbeType    :: Text
+                      , fbeMessage :: Text
+                      }
+    -- | An exception coming from the @fb@ package's code.
+  | FbLibraryException { fbeMessage :: Text }
+    deriving (Eq, Ord, Show, Read, Typeable)
+
+instance A.FromJSON FacebookException where
+    parseJSON (A.Object v) =
+        FacebookException <$> v A..: "type"
+                          <*> v A..: "message"
+    parseJSON _ = mzero
+
+instance E.Exception FacebookException where
+
