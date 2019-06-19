@@ -509,6 +509,13 @@ libraryTests manager = do
          do A.eitherDecode (A.encode invalidUserAccessToken) @?= Right invalidUserAccessToken
        it "can be round-tripped with ToJSON/FromJSON (AppKind)" $
          do A.eitherDecode (A.encode invalidAppAccessToken) @?= Right invalidAppAccessToken
+  describe "makeAppSecretProof" $
+    do it "generates correct hmac" $
+        let creds  = FB.Credentials "name" "id" "secret" True
+            uToken = FB.UserAccessToken (FB.Id "user") "accesstoken" undefined
+            proof  = FB.makeAppSecretProof creds $ Just uToken
+            expectedProof = "65138b7ea24e641d38c91befa22b6281953980d1bfd0322956bc29959e1a910c"
+         in proof @?= [( "appsecret_proof", expectedProof )]
 
 -- Wrappers for HUnit operators using MonadIO
 (&?=)
