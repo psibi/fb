@@ -1,11 +1,8 @@
-# Version 2.0.1
-
-* Fix appsecret_proof verification encoding.
-
 # Version 2.0.0
 
 * Add Graph API version parameter. Avoid hardcoded `v2.8`.
 * Add appsecret_proof verification.
+* Fix appsecret_proof verification encoding.
 
 # Version 1.2.1
 
