@@ -41,7 +41,7 @@ import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.Logger (MonadLogger(..))
 import Control.Monad.Trans.Class (MonadTrans(lift))
 import UnliftIO
-import Control.Monad.Trans.Reader (ReaderT(..), ask, mapReaderT)
+import Control.Monad.Trans.Reader (ReaderT(..), ask, mapReaderT, withReaderT)
 import qualified UnliftIO.Exception as E
 import Data.Typeable (Typeable)
 import qualified Control.Monad.Trans.Resource as R
@@ -122,6 +122,10 @@ data FbTier
   | Beta
   deriving (Eq, Ord, Show, Read, Enum, Typeable)
 
+
+setApiVersion :: (Monad m) => ApiVersion -> FacebookT Auth m a -> FacebookT Auth m a
+setApiVersion apiVersion (F act) = F $ withReaderT (\env -> env { fbdApiVersion = apiVersion }) act
+
 -- | Run a computation in the 'FacebookT' monad transformer with
 -- your credentials.
 runFacebookT
@@ -130,7 +134,7 @@ runFacebookT
   -> H.Manager -- ^ Connection manager (see 'H.withManager').
   -> FacebookT Auth m a
   -> m a
-runFacebookT creds apiVersion manager (F act) =
+runFacebookT creds apiVersion manager (F act) = do
   runReaderT act (FbData ( Just creds ) manager Production apiVersion)
 
 
