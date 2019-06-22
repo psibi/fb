@@ -26,12 +26,11 @@ import Control.Applicative
 import Control.Monad (guard, mzero)
 import Control.Monad.IO.Class
 import Control.Monad.Trans.Maybe (MaybeT(..))
-import Crypto.Classes (constTimeEq)
 import "cryptonite" Crypto.Hash.Algorithms (SHA256)
 import "cryptonite" Crypto.MAC.HMAC (HMAC(..), hmac)
 import Data.Aeson ((.:))
 import Data.Aeson.Parser (json')
-import Data.ByteArray (convert)
+import Data.ByteArray (ScrubbedBytes(..), convert)
 import Data.Maybe (fromMaybe)
 import Data.String (IsString(..))
 import Data.Text (Text)
@@ -366,7 +365,7 @@ parseSignedRequest signedRequest =
         expectedSignature =
           Cereal.encode $
           (convert $ (hmac hmacKey encodedUnparsedPayload :: HMAC SHA256) :: B.ByteString)
-    guard (signature `constTimeEq` expectedSignature)
+    guard ((convert signature :: ScrubbedBytes) == (convert expectedSignature))
      -- Parse user data type
     fromJson payload
   where

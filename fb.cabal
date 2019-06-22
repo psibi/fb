@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 192aab6a0c0def7b52c6aa73229714413a410a608002782c50804c083913a779
+-- hash: 0c9ab03b5cc3b8023bee2e511bc2fd3e067e87123a230bc835136707bb169bda
 
 name:           fb
 version:        2.0.0
@@ -80,8 +80,6 @@ library
     , cereal >=0.3 && <0.6
     , conduit >=1.3.0
     , conduit-extra >=1.3.0
-    , crypto-api >=0.11 && <0.14
-    , cryptohash >=0.7
     , cryptonite
     , data-default
     , http-client >=0.4.30

@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE PackageImports #-}
+{-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Facebook.RealTime
@@ -20,11 +21,10 @@ import Control.Applicative ((<$>), (<*>))
 import Control.Monad (liftM, mzero, void)
 import Control.Monad.IO.Class
 import qualified Control.Monad.Trans.Resource as R
-import qualified Crypto.Classes as Crypto
 import "cryptonite" Crypto.Hash.Algorithms (SHA1)
 import "cryptonite" Crypto.MAC.HMAC (HMAC(..), hmac)
 import qualified Data.Aeson as A
-import Data.ByteArray (convert)
+import Data.ByteArray (ScrubbedBytes(..), convert)
 import qualified Data.ByteString as B
 import qualified Data.ByteString.Base16 as Base16
 import Data.ByteString.Char8 (ByteString)
@@ -175,9 +175,9 @@ verifyRealTimeUpdateNotifications sig body = do
       hmacData = hmac (appSecretBS creds) (L.toStrict body)
       hash :: B.ByteString
       hash = convert hmacData
-      expected = "sha1=" <> Base16.encode (Crypto.encode hash)
+      expected = "sha1=" <> Base16.encode hash
   return $!
-    if sig `Crypto.constTimeEq` expected
+    if ((convert sig :: ScrubbedBytes) == (convert expected))
       then Just body
       else Nothing
 
