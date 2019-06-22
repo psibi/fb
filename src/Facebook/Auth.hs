@@ -26,29 +26,27 @@ import Control.Applicative
 import Control.Monad (guard, mzero)
 import Control.Monad.IO.Class
 import Control.Monad.Trans.Maybe (MaybeT(..))
-import "cryptonite" Crypto.Hash.Algorithms (SHA256)
-import "cryptonite" Crypto.MAC.HMAC (HMAC(..), hmac)
+import qualified Control.Monad.Trans.Resource as R
+import Crypto.Hash.Algorithms (SHA256)
+import Crypto.MAC.HMAC (HMAC(..), hmac)
 import Data.Aeson ((.:))
+import qualified Data.Aeson as AE
 import Data.Aeson.Parser (json')
-import Data.ByteArray (ScrubbedBytes(..), convert)
+import qualified Data.Aeson.Types as AE
+import qualified Data.Attoparsec.ByteString.Char8 as AB
+import Data.ByteArray (ScrubbedBytes, convert)
+import Data.ByteArray.Encoding (Base(..), convertFromBase)
+import qualified Data.ByteString as B
+import qualified Data.ByteString.Char8 as B8
+import qualified Data.List as L
 import Data.Maybe (fromMaybe)
 import Data.String (IsString(..))
 import Data.Text (Text)
-import Data.Time (UTCTime, addUTCTime, getCurrentTime)
-import Data.Typeable (Typeable)
-
-import qualified Control.Monad.Trans.Resource as R
-import qualified Data.Aeson as AE
-import qualified Data.Aeson.Types as AE
-import qualified Data.Attoparsec.ByteString.Char8 as AB
-import qualified Data.ByteString as B
-import qualified Data.ByteString.Base64.URL as Base64URL
-import qualified Data.ByteString.Char8 as B8
-import qualified Data.List as L
-import qualified Data.Serialize as Cereal
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as TE
 import qualified Data.Text.Encoding.Error as TE
+import Data.Time (UTCTime, addUTCTime, getCurrentTime)
+import Data.Typeable (Typeable)
 import qualified Network.HTTP.Types as HT
 import qualified UnliftIO.Exception as E
 
@@ -352,19 +350,19 @@ parseSignedRequest signedRequest =
     ('.', encodedUnparsedPayload) <-
       MaybeT $ return (B8.uncons encodedUnparsedPayloadWithDot)
     signature <-
-      eitherToMaybeT $ Base64URL.decode $ addBase64Padding encodedSignature
+      eitherToMaybeT $
+      convertFromBase Base64 $ addBase64Padding encodedSignature
     unparsedPayload <-
       eitherToMaybeT $
-      Base64URL.decode $ addBase64Padding encodedUnparsedPayload
+      convertFromBase Base64 $ addBase64Padding encodedUnparsedPayload
     payload <- eitherToMaybeT $ AB.parseOnly json' unparsedPayload
      -- Verify signature
     SignedRequestAlgorithm algo <- fromJson payload
     guard (algo == "HMAC-SHA256")
     creds <- lift getCreds
     let hmacKey = credsToHmacKey creds
-        expectedSignature =
-          (convert $ (hmac hmacKey encodedUnparsedPayload :: HMAC SHA256) :: B.ByteString)
-    guard ((convert signature :: ScrubbedBytes) == (convert expectedSignature))
+        expectedSignature = hmac hmacKey encodedUnparsedPayload :: HMAC SHA256
+    guard ((signature :: ScrubbedBytes) == (convert expectedSignature))
      -- Parse user data type
     fromJson payload
   where

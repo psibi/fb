@@ -1,7 +1,6 @@
 module Facebook
-  (
    -- * @FacebookT@ monad transformer
-   FacebookT
+  ( FacebookT
   , runFacebookT
   , runNoAuthFacebookT
   , mapFacebookT
@@ -20,6 +19,7 @@ module Facebook
   , ApiVersion
   , hasExpired
   , isValid
+  , setApiVersion
    -- ** App access token
   , AppKind
   , getAppAccessToken
@@ -129,18 +129,18 @@ module Facebook
   , unPermission
   ) where
 
-import Facebook.Types
-import Facebook.Monad
-import Facebook.Base
 import Facebook.Auth
-import Facebook.Pager
+import Facebook.Base
+import Facebook.FQL
 import Facebook.Graph
-import Facebook.Object.Page
-import Facebook.Object.User
+import Facebook.Monad
 import Facebook.Object.Action
 import Facebook.Object.Checkin
-import Facebook.Object.Order
 import Facebook.Object.FriendList
+import Facebook.Object.Order
+import Facebook.Object.Page
+import Facebook.Object.User
+import Facebook.Pager
 import Facebook.RealTime
-import Facebook.FQL
 import Facebook.TestUsers
+import Facebook.Types

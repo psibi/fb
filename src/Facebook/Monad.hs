@@ -9,7 +9,6 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE PackageImports #-}
 
 module Facebook.Monad
   ( FacebookT
@@ -30,6 +29,7 @@ module Facebook.Monad
   , makeAppSecretProof
   , runResourceInFb
   , mapFacebookT
+  , setApiVersion
    -- * Re-export
   , lift
   ) where
@@ -46,13 +46,12 @@ import Control.Monad.Trans.Reader (ReaderT(..), ask, mapReaderT, withReaderT)
 import qualified Control.Monad.Trans.Resource as R
 import qualified UnliftIO.Exception as E
 import Data.Typeable (Typeable)
-import qualified Data.ByteString.Base16 as Base16
 import qualified Data.Text.Encoding as TE
 import qualified Network.HTTP.Conduit as H
 import qualified Network.HTTP.Types as HT
-import "cryptonite" Crypto.MAC.HMAC (HMAC(..), hmac)
-import "cryptonite" Crypto.Hash.Algorithms (SHA256)
-import Data.ByteArray (convert)
+import Crypto.MAC.HMAC (HMAC(..), hmac)
+import Crypto.Hash.Algorithms (SHA256)
+import Data.ByteArray.Encoding (convertToBase, Base(..))
 import Facebook.Types
 import Control.Monad.Fail (MonadFail(..))
 
@@ -157,7 +156,7 @@ makeAppSecretProof creds (Just ( UserAccessToken _ accessToken _ ))
   where
     hmacData :: HMAC SHA256
     hmacData = hmac (appSecretBS creds) (TE.encodeUtf8 accessToken)
-    proof = Base16.encode $ convert hmacData
+    proof = convertToBase Base16 hmacData
 makeAppSecretProof  _ _ = []
 
 

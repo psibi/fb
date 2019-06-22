@@ -24,9 +24,9 @@ import qualified Control.Monad.Trans.Resource as R
 import "cryptonite" Crypto.Hash.Algorithms (SHA1)
 import "cryptonite" Crypto.MAC.HMAC (HMAC(..), hmac)
 import qualified Data.Aeson as A
-import Data.ByteArray (ScrubbedBytes(..), convert)
+import Data.ByteArray (ScrubbedBytes, convert)
+import Data.ByteArray.Encoding (Base(..), convertToBase)
 import qualified Data.ByteString as B
-import qualified Data.ByteString.Base16 as Base16
 import Data.ByteString.Char8 (ByteString)
 import qualified Data.ByteString.Lazy.Char8 as L
 import qualified Data.Conduit as C
@@ -174,8 +174,8 @@ verifyRealTimeUpdateNotifications sig body = do
   let hmacData :: HMAC SHA1
       hmacData = hmac (appSecretBS creds) (L.toStrict body)
       hash :: B.ByteString
-      hash = convert hmacData
-      expected = "sha1=" <> Base16.encode hash
+      hash = convertToBase Base16 hmacData
+      expected = "sha1=" <> hash
   return $!
     if ((convert sig :: ScrubbedBytes) == (convert expected))
       then Just body
