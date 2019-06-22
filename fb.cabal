@@ -1,11 +1,13 @@
--- This file has been generated from package.yaml by hpack version 0.21.2.
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.31.2.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 1f1f3544be4d2d1dbdab5e0286e45bc861f216f4b24d04227e926c4cc51ab272
+-- hash: 192aab6a0c0def7b52c6aa73229714413a410a608002782c50804c083913a779
 
 name:           fb
-version:        1.2.1
+version:        2.0.0
 synopsis:       Bindings to Facebook's API.
 description:    This package exports bindings to Facebook's APIs (see
                 <http://developers.facebook.com/>).  Does not have any external
@@ -29,14 +31,12 @@ copyright:      Felipe Lessa and Sibi Prabakaran
 license:        BSD3
 license-file:   LICENSE
 build-type:     Simple
-cabal-version:  >= 1.10
-
 extra-source-files:
-    CHANGELOG.md
-    example.hs
-    README.md
     tests/Main.hs
     tests/tryIt.hs
+    example.hs
+    README.md
+    CHANGELOG.md
 
 source-repository head
   type: git
@@ -82,11 +82,12 @@ library
     , conduit-extra >=1.3.0
     , crypto-api >=0.11 && <0.14
     , cryptohash >=0.7
-    , cryptohash-cryptoapi ==0.1.*
+    , cryptonite
     , data-default
     , http-client >=0.4.30
     , http-conduit >=2.3.0
     , http-types
+    , memory
     , monad-logger >=0.3.28
     , old-locale
     , resourcet >=1.2.0

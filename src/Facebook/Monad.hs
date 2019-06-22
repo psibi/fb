@@ -9,6 +9,7 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE PackageImports #-}
 
 module Facebook.Monad
   ( FacebookT
@@ -46,15 +47,12 @@ import qualified Control.Monad.Trans.Resource as R
 import qualified UnliftIO.Exception as E
 import Data.Typeable (Typeable)
 import qualified Data.ByteString.Base16 as Base16
-
-import Crypto.Hash.CryptoAPI (SHA256)
-import Crypto.HMAC (hmac', MacKey(..))
-import Crypto.Classes (encode)
 import qualified Data.Text.Encoding as TE
-
 import qualified Network.HTTP.Conduit as H
 import qualified Network.HTTP.Types as HT
-
+import "cryptonite" Crypto.MAC.HMAC (HMAC(..), hmac)
+import "cryptonite" Crypto.Hash.Algorithms (SHA256)
+import Data.ByteArray (convert)
 import Facebook.Types
 
 -- | @FacebookT auth m a@ is this library's monad transformer.
@@ -156,9 +154,9 @@ makeAppSecretProof creds (Just ( UserAccessToken _ accessToken _ ))
   = [( TE.encodeUtf8 "appsecret_proof", proof)]
 
   where
-    key :: MacKey ctx SHA256
-    key   = MacKey $ appSecretBS creds
-    proof = Base16.encode $ encode $ hmac' key ( TE.encodeUtf8 accessToken )
+    hmacData :: HMAC SHA256
+    hmacData = hmac (appSecretBS creds) (TE.encodeUtf8 accessToken)
+    proof = Base16.encode $ convert hmacData
 makeAppSecretProof  _ _ = []
 
 
