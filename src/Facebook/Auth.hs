@@ -363,7 +363,6 @@ parseSignedRequest signedRequest =
     creds <- lift getCreds
     let hmacKey = credsToHmacKey creds
         expectedSignature =
-          Cereal.encode $
           (convert $ (hmac hmacKey encodedUnparsedPayload :: HMAC SHA256) :: B.ByteString)
     guard ((convert signature :: ScrubbedBytes) == (convert expectedSignature))
      -- Parse user data type
