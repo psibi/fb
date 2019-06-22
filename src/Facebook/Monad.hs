@@ -42,15 +42,15 @@ import Control.Monad.Logger (MonadLogger(..))
 import Control.Monad.Trans.Class (MonadTrans(lift))
 import UnliftIO
 import Control.Monad.Trans.Reader (ReaderT(..), ask, mapReaderT, withReaderT)
+import qualified Control.Monad.Trans.Resource as R
 import qualified UnliftIO.Exception as E
 import Data.Typeable (Typeable)
-import qualified Control.Monad.Trans.Resource as R
+import qualified Data.ByteString.Base16 as Base16
 
 import Crypto.Hash.CryptoAPI (SHA256)
 import Crypto.HMAC (hmac', MacKey(..))
-import qualified Data.Serialize as Cereal
+import Crypto.Classes (encode)
 import qualified Data.Text.Encoding as TE
-
 
 import qualified Network.HTTP.Conduit as H
 import qualified Network.HTTP.Types as HT
@@ -158,7 +158,7 @@ makeAppSecretProof creds (Just ( UserAccessToken _ accessToken _ ))
   where
     key :: MacKey ctx SHA256
     key   = MacKey $ appSecretBS creds
-    proof = Cereal.encode $ hmac' key ( TE.encodeUtf8 accessToken )
+    proof = Base16.encode $ encode $ hmac' key ( TE.encodeUtf8 accessToken )
 makeAppSecretProof  _ _ = []
 
 
