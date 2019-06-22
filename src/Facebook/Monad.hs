@@ -54,6 +54,7 @@ import "cryptonite" Crypto.MAC.HMAC (HMAC(..), hmac)
 import "cryptonite" Crypto.Hash.Algorithms (SHA256)
 import Data.ByteArray (convert)
 import Facebook.Types
+import Control.Monad.Fail (MonadFail(..))
 
 -- | @FacebookT auth m a@ is this library's monad transformer.
 -- Contains information needed to issue commands and queries to
@@ -62,7 +63,7 @@ import Facebook.Types
 -- supplied any 'Credentials').
 newtype FacebookT auth m a = F
   { unF :: ReaderT FbData m a -- FbData -> m a
-  } deriving (Functor, Applicative, Alternative, Monad, MonadFix, MonadPlus, MonadIO, MonadTrans, R.MonadThrow)
+  } deriving (Functor, Applicative, Alternative, Monad, MonadFix, MonadPlus, MonadIO, MonadTrans, R.MonadThrow, MonadFail)
 
 deriving instance
          (R.MonadResource m, MonadBase IO m) =>
