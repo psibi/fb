@@ -1,6 +1,4 @@
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE PackageImports #-}
-{-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE OverloadedStrings #-}
 
 module Facebook.RealTime
@@ -21,8 +19,8 @@ import Control.Applicative ((<$>), (<*>))
 import Control.Monad (liftM, mzero, void)
 import Control.Monad.IO.Class
 import qualified Control.Monad.Trans.Resource as R
-import "cryptonite" Crypto.Hash.Algorithms (SHA1)
-import "cryptonite" Crypto.MAC.HMAC (HMAC(..), hmac)
+import Crypto.Hash.Algorithms (SHA1)
+import Crypto.MAC.HMAC (HMAC(..), hmac)
 import qualified Data.Aeson as A
 import Data.ByteArray (ScrubbedBytes, convert)
 import Data.ByteArray.Encoding (Base(..), convertToBase)
