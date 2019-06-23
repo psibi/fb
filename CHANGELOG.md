@@ -12,6 +12,8 @@
   - memory
 * Add new function setApiVersion
 * Add Graph API version parameter. Avoid hardcoded `v2.8`.
+* Expose setApiVersion and getApiVersion function
+* Default API endpoint updated to `v3.2`
 * Add appsecret_proof verification.
 * Fix appsecret_proof verification encoding.
 

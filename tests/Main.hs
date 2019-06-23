@@ -39,9 +39,6 @@ import Test.HUnit ((@?=))
 import Test.Hspec
 import Test.Hspec.QuickCheck
 
-apiVersion :: FB.ApiVersion
-apiVersion = "v3.2"
-
 -- | Grab the Facebook credentials from the environment.
 getCredentials :: IO FB.Credentials
 getCredentials = tryToGet `E.catch` showHelp
@@ -104,15 +101,15 @@ main = do
         "Production tier: "
         creds
         manager
-        (R.runResourceT . (FB.runFacebookT creds apiVersion manager))
-        (R.runResourceT . (FB.runNoAuthFacebookT apiVersion manager))
+        (R.runResourceT . (FB.runFacebookT creds manager))
+        (R.runResourceT . (FB.runNoAuthFacebookT manager))
             -- ...and the other in Facebook's beta tier.
       facebookTests
         "Beta tier: "
         creds
         manager
-        (R.runResourceT . (FB.beta_runFacebookT creds apiVersion manager))
-        (R.runResourceT . (FB.beta_runNoAuthFacebookT apiVersion manager))
+        (R.runResourceT . (FB.beta_runFacebookT creds manager))
+        (R.runResourceT . (FB.beta_runNoAuthFacebookT manager))
             -- Tests that don't depend on which tier is chosen.
       libraryTests manager
 
@@ -132,11 +129,18 @@ facebookTests pretitle creds manager runAuth runNoAuth = do
         FB.isValid token #?= True
     it "throws a FacebookException on invalid credentials" $
       R.runResourceT $
-      FB.runFacebookT invalidCredentials apiVersion manager $ do
+      FB.runFacebookT invalidCredentials manager $ do
         ret <- E.try $ FB.getAppAccessToken
         case ret of
           Right token -> fail $ show token
           Left (_ :: FB.FacebookException) -> lift $ lift (return () :: IO ())
+  describe' "setApiVersion" $ do
+    it "Check default apiVersion" $ runNoAuth $ FB.getApiVersion #?= "v3.2"
+    it "Change apiVersion" $
+      (runNoAuth $ do
+         FB.setApiVersion "v100"
+         FB.getApiVersion) #?=
+      "v100"
   describe' "isValid" $ do
     it "returns False on a clearly invalid user access token" $
       runNoAuth $ FB.isValid invalidUserAccessToken #?= False
@@ -407,8 +411,7 @@ libraryTests manager = do
         exampleData = "eyJhbGdvcml0aG0iOiJITUFDLVNIQTI1NiIsIjAiOiJwYXlsb2FkIn0"
         exampleCreds = FB.Credentials "name" "id" "secret" False
         runExampleAuth :: FB.FacebookT FB.Auth (R.ResourceT IO) a -> IO a
-        runExampleAuth =
-          R.runResourceT . FB.runFacebookT exampleCreds apiVersion manager
+        runExampleAuth = R.runResourceT . FB.runFacebookT exampleCreds manager
     it "works for Facebook example" $ do
       runExampleAuth $ do
         ret <- FB.parseSignedRequest (B.concat [exampleSig, ".", exampleData])

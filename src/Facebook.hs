@@ -20,6 +20,7 @@ module Facebook
   , hasExpired
   , isValid
   , setApiVersion
+  , getApiVersion
    -- ** App access token
   , AppKind
   , getAppAccessToken
