@@ -42,7 +42,7 @@ import Control.Monad.Fix (MonadFix)
 import Control.Monad.IO.Class (MonadIO)
 import Control.Monad.Logger (MonadLogger(..))
 import Control.Monad.Trans.Class (MonadTrans(lift))
-import Control.Monad.Trans.Reader (ReaderT(..), ask, mapReaderT, withReaderT)
+import Control.Monad.Trans.Reader (ReaderT(..), ask, mapReaderT)
 import qualified Control.Monad.Trans.Resource as R
 import Crypto.Hash.Algorithms (SHA256)
 import Crypto.MAC.HMAC (HMAC(..), hmac)

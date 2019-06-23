@@ -7,6 +7,7 @@
   - crypto-api
   - cryptohash
   - cryptohash-cryptoapi
+  - old-locale
 * Introduce new dependency:
   - cryptonite
   - memory

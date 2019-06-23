@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 2136e12798f44132c624c61d5fb40d5803524eac96f6745f6fae2ed54103ed61
+-- hash: 1165a61ce7ffe062813385420ff4c80c2e0089e64221cfd0d045a3cf1654b8a8
 
 name:           fb
 version:        2.0.0
@@ -72,9 +72,9 @@ library
   ghc-options: -Wall
   build-depends:
       aeson >=0.8.0.2
-    , attoparsec >=0.10.4 && <0.14
+    , attoparsec >=0.10.4
     , base >=4 && <5
-    , bytestring >=0.9 && <0.11
+    , bytestring >=0.9
     , conduit >=1.3.0
     , conduit-extra >=1.3.0
     , cryptonite
@@ -84,11 +84,10 @@ library
     , http-types
     , memory
     , monad-logger >=0.3.28
-    , old-locale
     , resourcet >=1.2.0
-    , text >=0.11 && <1.3
+    , text >=0.11
     , time >=1.4
-    , transformers >=0.2 && <0.6
+    , transformers >=0.2
     , transformers-base
     , unliftio
     , unliftio-core
