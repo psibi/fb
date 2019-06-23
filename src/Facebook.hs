@@ -1,6 +1,7 @@
 module Facebook
-   -- * @FacebookT@ monad transformer
-  ( FacebookT
+  ( 
+    -- * @FacebookT@ monad transformer
+    FacebookT
   , runFacebookT
   , runNoAuthFacebookT
   , mapFacebookT

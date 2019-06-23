@@ -132,7 +132,8 @@ data FbTier
 defaultApiVersion :: ApiVersion
 defaultApiVersion = "v3.2"
 
-setApiVersion :: (MonadIO m) => ApiVersion -> FacebookT auth m ()
+-- | Set the Graph API version.
+setApiVersion :: (MonadIO m) => ApiVersion -> FacebookT anyAuth m ()
 setApiVersion apiVersion = do
   ref <- fbdApiVersion `liftM` F ask
   atomicModifyIORef' ref (\_ -> (apiVersion, ()))
