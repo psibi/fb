@@ -47,7 +47,7 @@ import Facebook.Monad
 
 -- | A plain 'H.Request' to a Facebook API.  Use this instead of
 -- 'def' when creating new 'H.Request'@s@ for Facebook.
-fbreq :: Monad m
+fbreq :: MonadIO m
       => Text                        -- ^ Path. Should start from "/".
       -> Maybe (AccessToken anyKind) -- ^ Access token.
       -> HT.SimpleQuery              -- ^ Parameters.

@@ -1,11 +1,4 @@
-resolver: nightly-2018-03-15
+resolver: lts-13.25
 
 packages:
 - '.'
-
-extra-deps:
-- conduit-1.3.0
-- resourcet-1.2.0
-- conduit-extra-1.3.0
-- http-conduit-2.3.0
-- cryptohash-cryptoapi-0.1.4

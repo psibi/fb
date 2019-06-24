@@ -18,30 +18,30 @@ module Facebook.RealTime
 import Control.Applicative ((<$>), (<*>))
 import Control.Monad (liftM, mzero, void)
 import Control.Monad.IO.Class
-import Crypto.Hash.CryptoAPI (SHA1)
-import Data.ByteString.Char8 (ByteString)
-import Data.Text (Text)
-import Data.Text.Encoding (encodeUtf8)
-import Data.Typeable (Typeable)
-
 import qualified Control.Monad.Trans.Resource as R
-import qualified Crypto.Classes as Crypto
-import qualified Crypto.HMAC as Crypto
+import Crypto.Hash.Algorithms (SHA1)
+import Crypto.MAC.HMAC (HMAC(..), hmac)
 import qualified Data.Aeson as A
-import qualified Data.ByteString.Base16 as Base16
+import Data.ByteArray (ScrubbedBytes, convert)
+import Data.ByteArray.Encoding (Base(..), convertToBase)
+import qualified Data.ByteString as B
+import Data.ByteString.Char8 (ByteString)
 import qualified Data.ByteString.Lazy.Char8 as L
 import qualified Data.Conduit as C
 import qualified Data.Conduit.List as CL
+import Data.Text (Text)
 import qualified Data.Text as T
+import Data.Text.Encoding (encodeUtf8)
 import qualified Data.Text.Encoding as TE
+import Data.Typeable (Typeable)
 import qualified Network.HTTP.Conduit as H
 import qualified Network.HTTP.Types as HT
 
-import Facebook.Types
-import Facebook.Monad
 import Facebook.Base
 import Facebook.Graph
+import Facebook.Monad
 import Facebook.Pager
+import Facebook.Types
 
 -- | The type of objects that a real-time update refers to.
 data RealTimeUpdateObject
@@ -90,8 +90,8 @@ type RealTimeUpdateToken = ByteString
 -- If there was any previous subscription for the given
 -- 'RealTimeUpdateObject', it's overriden by this one (even if
 -- the other subscription had a different callback URL).
-modifySubscription
-  :: (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m)
+modifySubscription ::
+     (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m)
   => RealTimeUpdateObject
      -- ^ Type of objects whose subscription you
      -- and to add or modify.
@@ -113,31 +113,27 @@ modifySubscription object fields callbackUrl verifyToken apptoken = do
         , "callback_url" #= callbackUrl
         , "verify_token" #= verifyToken
         ]
-  runResourceInFb $
-    do req <- fbreq path (Just apptoken) args
-       void $
-         fbhttp
-           req
-           { H.method = HT.methodPost
-           }
+  runResourceInFb $ do
+    req <- fbreq path (Just apptoken) args
+    void $ fbhttp req {H.method = HT.methodPost}
   return ()
 
 -- | (Internal)  Get the subscription's path.
-getSubscriptionsPath
-  :: (Monad m, MonadIO m)
-  => FacebookT Auth m Text
+getSubscriptionsPath :: (Monad m, MonadIO m) => FacebookT Auth m Text
 getSubscriptionsPath = do
   creds <- getCreds
   return $ T.concat ["/", appId creds, "/subscriptions"]
 
 -- | Information returned by Facebook about a real-time update
 -- notification subscription.
-data RealTimeUpdateSubscription = RealTimeUpdateSubscription
-  { rtusObject :: RealTimeUpdateObject
-  , rtusCallbackUrl :: RealTimeUpdateUrl
-  , rtusFields :: [RealTimeUpdateField]
-  , rtusActive :: Bool
-  } deriving (Eq, Ord, Show, Typeable)
+data RealTimeUpdateSubscription =
+  RealTimeUpdateSubscription
+    { rtusObject :: RealTimeUpdateObject
+    , rtusCallbackUrl :: RealTimeUpdateUrl
+    , rtusFields :: [RealTimeUpdateField]
+    , rtusActive :: Bool
+    }
+  deriving (Eq, Ord, Show, Typeable)
 
 instance A.FromJSON RealTimeUpdateSubscription where
   parseJSON (A.Object v) =
@@ -147,9 +143,10 @@ instance A.FromJSON RealTimeUpdateSubscription where
   parseJSON _ = mzero
 
 -- | List current real-time update subscriptions.
-listSubscriptions
-  :: (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m)
-  => AppAccessToken -> FacebookT Auth m [RealTimeUpdateSubscription]
+listSubscriptions ::
+     (R.MonadResource m, R.MonadUnliftIO m, R.MonadThrow m)
+  => AppAccessToken
+  -> FacebookT Auth m [RealTimeUpdateSubscription]
 listSubscriptions apptoken = do
   path <- getSubscriptionsPath
   pager <- getObject path [] (Just apptoken)
@@ -163,8 +160,8 @@ listSubscriptions apptoken = do
 -- header's value.  If it's not valid, @Nothing@ is returned,
 -- otherwise @Just data@ is returned where @data@ is the original
 -- data.
-verifyRealTimeUpdateNotifications
-  :: (Monad m, MonadIO m)
+verifyRealTimeUpdateNotifications ::
+     (Monad m, MonadIO m)
   => ByteString
      -- ^ @X-Hub-Signature@ HTTP header's value.
   -> L.ByteString
@@ -172,12 +169,13 @@ verifyRealTimeUpdateNotifications
   -> FacebookT Auth m (Maybe L.ByteString)
 verifyRealTimeUpdateNotifications sig body = do
   creds <- getCreds
-  let key :: Crypto.MacKey ctx SHA1
-      key = Crypto.MacKey (appSecretBS creds)
-      hash = Crypto.hmac key body
-      expected = "sha1=" <> Base16.encode (Crypto.encode hash)
+  let hmacData :: HMAC SHA1
+      hmacData = hmac (appSecretBS creds) (L.toStrict body)
+      hash :: B.ByteString
+      hash = convertToBase Base16 hmacData
+      expected = "sha1=" <> hash
   return $!
-    if sig `Crypto.constTimeEq` expected
+    if ((convert sig :: ScrubbedBytes) == (convert expected))
       then Just body
       else Nothing
 
@@ -186,14 +184,15 @@ verifyRealTimeUpdateNotifications sig body = do
 -- signature is invalid or the data can't be parsed (use
 -- 'verifyRealTimeUpdateNotifications' if you need to distinguish
 -- between these two error conditions).
-getRealTimeUpdateNotifications
-  :: (Monad m, A.FromJSON a, MonadIO m)
+getRealTimeUpdateNotifications ::
+     (Monad m, A.FromJSON a, MonadIO m)
   => ByteString
      -- ^ @X-Hub-Signature@ HTTP header's value.
   -> L.ByteString
      -- ^ Request body with JSON-encoded notifications.
   -> FacebookT Auth m (Maybe (RealTimeUpdateNotification a))
-getRealTimeUpdateNotifications = (liftM (>>= A.decode) .) . verifyRealTimeUpdateNotifications
+getRealTimeUpdateNotifications =
+  (liftM (>>= A.decode) .) . verifyRealTimeUpdateNotifications
 
 -- | When data changes and there's a valid subscription, Facebook
 -- will @POST@ to your 'RealTimeUpdateUrl' with a JSON-encoded
@@ -208,23 +207,26 @@ getRealTimeUpdateNotifications = (liftM (>>= A.decode) .) . verifyRealTimeUpdate
 -- the value of 'rtunObject'.
 --
 -- We recommend using 'getRealTimeUpdateNotifications'.
-data RealTimeUpdateNotification a = RealTimeUpdateNotification
-  { rtunObject :: RealTimeUpdateObject
-  , rtunEntries :: [a]
-  } deriving (Eq, Ord, Show, Typeable)
+data RealTimeUpdateNotification a =
+  RealTimeUpdateNotification
+    { rtunObject :: RealTimeUpdateObject
+    , rtunEntries :: [a]
+    }
+  deriving (Eq, Ord, Show, Typeable)
 
-instance A.FromJSON a =>
-         A.FromJSON (RealTimeUpdateNotification a) where
+instance A.FromJSON a => A.FromJSON (RealTimeUpdateNotification a) where
   parseJSON (A.Object v) =
     RealTimeUpdateNotification <$> v A..: "object" <*> v A..: "entry"
   parseJSON _ = mzero
 
 -- | A notification for the 'UserRTUO' object.
-data RealTimeUpdateNotificationUserEntry = RealTimeUpdateNotificationUserEntry
-  { rtuneUserId :: Id
-  , rtuneChangedFields :: [RealTimeUpdateField]
-  , rtuneTime :: Integer
-  } deriving (Eq, Ord, Show, Typeable)
+data RealTimeUpdateNotificationUserEntry =
+  RealTimeUpdateNotificationUserEntry
+    { rtuneUserId :: Id
+    , rtuneChangedFields :: [RealTimeUpdateField]
+    , rtuneTime :: Integer
+    }
+  deriving (Eq, Ord, Show, Typeable)
 
 instance A.FromJSON RealTimeUpdateNotificationUserEntry where
   parseJSON (A.Object v) =

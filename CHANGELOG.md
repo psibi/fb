@@ -1,6 +1,20 @@
 # Version 2.0.0
 
+* Remove following dependency:
+  - base16-bytestring
+  - base64-bytestring
+  - cereal
+  - crypto-api
+  - cryptohash
+  - cryptohash-cryptoapi
+  - old-locale
+* Introduce new dependency:
+  - cryptonite
+  - memory
+* Add new function setApiVersion
 * Add Graph API version parameter. Avoid hardcoded `v2.8`.
+* Expose setApiVersion and getApiVersion function
+* Default API endpoint updated to `v3.2`
 * Add appsecret_proof verification.
 * Fix appsecret_proof verification encoding.
 
