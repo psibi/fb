@@ -1,3 +1,7 @@
+# Version 2.1.0
+
+* Same release as 2.0.1 bound follows PVP properly
+
 # Version 2.0.1
 
 * Fix MonadUnliftIO instance for FacebookT
