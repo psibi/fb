@@ -4,10 +4,10 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 1165a61ce7ffe062813385420ff4c80c2e0089e64221cfd0d045a3cf1654b8a8
+-- hash: f698ca30c7f08b732695d16796a83805031f7c6656a996d179507f92d1ad54e1
 
 name:           fb
-version:        2.0.0
+version:        2.0.1
 synopsis:       Bindings to Facebook's API.
 description:    This package exports bindings to Facebook's APIs (see
                 <http://developers.facebook.com/>).  Does not have any external
@@ -83,14 +83,14 @@ library
     , http-conduit >=2.3.0
     , http-types
     , memory
-    , monad-logger >=0.3.28
-    , resourcet >=1.2.0
+    , monad-logger >=0.3.32
+    , resourcet >=1.2.3
     , text >=0.11
     , time >=1.4
     , transformers >=0.2
     , transformers-base
     , unliftio
-    , unliftio-core
+    , unliftio-core >=0.2.0
     , unordered-containers
   if flag(debug)
     cpp-options: -DDEBUG

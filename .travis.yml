@@ -10,35 +10,35 @@ env:
     APP_NAME: "'Haskell Library Test APP'"
 matrix:
   include:
-  - env: BUILD=cabal GHCVER=8.0.2 CABALVER=1.24 HAPPYVER=1.19.5 ALEXVER=3.1.7
-    compiler: ": #GHC 8.0.2"
+  - env: BUILD=cabal GHCVER=8.8.3 CABALVER=2.4 HAPPYVER=1.19.5 ALEXVER=3.1.7
+    compiler: ": #GHC 8.8.3"
     addons:
       apt:
         packages:
-        - cabal-install-1.24
-        - ghc-8.0.2
+        - cabal-install-2.4
+        - ghc-8.8.3
         - happy-1.19.5
         - alex-3.1.7
         sources:
         - hvr-ghc
-  - env: BUILD=cabal GHCVER=8.2.1 CABALVER=2.0 HAPPYVER=1.19.5 ALEXVER=3.1.7
-    compiler: ": #GHC 8.2.1"
+  - env: BUILD=cabal GHCVER=8.6.5 CABALVER=2.0 HAPPYVER=1.19.5 ALEXVER=3.1.7
+    compiler: ": #GHC 8.6.5"
     addons:
       apt:
         packages:
         - cabal-install-2.0
-        - ghc-8.2.1
+        - ghc-8.6.5
         - happy-1.19.5
         - alex-3.1.7
         sources:
         - hvr-ghc
-  - env: BUILD=cabal GHCVER=8.4.1 CABALVER=2.0 HAPPYVER=1.19.5 ALEXVER=3.1.7
-    compiler: ": #GHC 8.4.1"
+  - env: BUILD=cabal GHCVER=8.4.4 CABALVER=2.0 HAPPYVER=1.19.5 ALEXVER=3.1.7
+    compiler: ": #GHC 8.4.4"
     addons:
       apt:
         packages:
         - cabal-install-2.0
-        - ghc-8.4.1
+        - ghc-8.4.4
         - happy-1.19.5
         - alex-3.1.7
         sources:
