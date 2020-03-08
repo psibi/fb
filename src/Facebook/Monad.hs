@@ -74,6 +74,7 @@ newtype FacebookT auth m a =
            , MonadTrans
            , R.MonadThrow
            , MonadFail
+           , MonadUnliftIO
            )
 
 deriving instance
@@ -82,20 +83,6 @@ deriving instance
 
 instance MonadBase b m => MonadBase b (FacebookT auth m) where
   liftBase = lift . liftBase
-
--- askUnliftIO = ReaderT $ \r ->
---                 withUnliftIO $ \u ->
--- return (UnliftIO (unliftIO u . flip runReaderT r))
-instance (MonadIO m, MonadUnliftIO m) => MonadUnliftIO (FacebookT auth m) where
-  askUnliftIO :: FacebookT auth m (UnliftIO (FacebookT auth m))
-  askUnliftIO =
-    F
-      (ReaderT $ \(r :: FbData) ->
-         withUnliftIO $ \(u :: UnliftIO m) ->
-           return
-             (UnliftIO
-                (\(x :: FacebookT auth m a) ->
-                   (unliftIO u ((flip runReaderT r) (unF x))))))
 
 -- | Since @fb-0.14.8@.
 instance MonadLogger m => MonadLogger (FacebookT auth m) where

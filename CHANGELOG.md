@@ -1,3 +1,8 @@
+# Version 2.0.1
+
+* Fix MonadUnliftIO instance for FacebookT
+* Have upper bound on unliftio and related packages
+
 # Version 2.0.0
 
 * Remove following dependency:

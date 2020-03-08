@@ -1,4 +1,9 @@
-resolver: lts-13.25
+resolver: lts-15.2
 
 packages:
 - '.'
+
+extra-deps:
+- unliftio-core-0.2.0.1@sha256:b9dc6a04c3a5ac10443895f1d1e145b0bebc206e009bb71f3d4d556a1a6379c3,1033
+- resourcet-1.2.3@sha256:b6339deb74483461431c58ad9537e603af0195d91d6f7738909400065fd70f24,1655
+- monad-logger-0.3.32@sha256:edb8a030012e4cf6dc19930ec36f846eeafcc9d871bd5bf0e863d78f6878b877,1755
