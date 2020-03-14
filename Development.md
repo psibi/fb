@@ -268,3 +268,5 @@ Test suite failure for package fb-2.1.0
     runtests:  exited with: ExitFailure 1
 Logs printed to console
 ```
+
+The `makeFriendConn` used to work before, but has started failing recently.
