@@ -1,5 +1,6 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -60,22 +61,25 @@ import qualified UnliftIO.Exception as E
 -- Facebook.  The phantom type @auth@ may be either 'Auth' (you
 -- have supplied your 'Credentials') or 'NoAuth' (you have not
 -- supplied any 'Credentials').
-newtype FacebookT auth m a =
-  F
-    { unF :: ReaderT FbData m a -- FbData -> m a
-    }
-  deriving ( Functor
-           , Applicative
-           , Alternative
-           , Monad
-           , MonadFix
-           , MonadPlus
-           , MonadIO
-           , MonadTrans
-           , R.MonadThrow
-           , MonadFail
-           , MonadUnliftIO
-           )
+newtype FacebookT auth m a = F
+  { unF :: ReaderT FbData m a -- FbData -> m a
+  } deriving ( Functor
+             , Applicative
+             , Alternative
+             , Monad
+             , MonadFix
+             , MonadPlus
+             , MonadIO
+             , MonadTrans
+             , R.MonadThrow
+             , MonadFail
+             )
+
+instance (MonadUnliftIO m) => MonadUnliftIO (FacebookT auth m) where
+  withRunInIO inner =
+    F $
+    ReaderT $ \r ->
+      withRunInIO $ \run -> inner (\fbT -> run $ (flip runReaderT) r (unF fbT))
 
 deriving instance
          (R.MonadResource m, MonadBase IO m) =>
@@ -100,14 +104,12 @@ data NoAuth
   deriving (Typeable)
 
 -- | Internal data kept inside 'FacebookT'.
-data FbData =
-  FbData
-    { fbdCreds :: Maybe Credentials
-    , fbdManager :: !H.Manager
-    , fbdTier :: !FbTier
-    , fbdApiVersion :: IORef ApiVersion
-    }
-  deriving (Typeable)
+data FbData = FbData
+  { fbdCreds :: Maybe Credentials
+  , fbdManager :: !H.Manager
+  , fbdTier :: !FbTier
+  , fbdApiVersion :: IORef ApiVersion
+  } deriving (Typeable)
 
 -- | Which Facebook tier should be used (see
 -- <https://developers.facebook.com/support/beta-tier/>).

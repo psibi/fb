@@ -4,7 +4,7 @@
 stack test
 ```
 
-Right now, it results in 10 failures. These 11 failure happen because
+Right now, it results in 12 failures. These 12 failure happen because
 our API don't have sufficient privilege. When the library was
 originally developed, it passed all the tests. Facebook has been
 introducing more permissions - so the tests don't pass completely
@@ -15,23 +15,17 @@ Result output:
 
 ``` shellsession
 $ stack test
-fb-2.0.0: unregistering (local file changes: src/Facebook/Monad.hs)
-fb> build (lib + test)
-Preprocessing library for fb-2.0.0..
-Building library for fb-2.0.0..
-[ 3 of 17] Compiling Facebook.Monad
-Preprocessing test suite 'runtests' for fb-2.0.0..
-Building test suite 'runtests' for fb-2.0.0..
-Linking .stack-work/dist/x86_64-linux/Cabal-2.4.0.1/build/runtests/runtests ...
-fb> copy/register
-Installing library in /home/sibi/github/fb/.stack-work/install/x86_64-linux/6c0d2999eddfddb4dd99f5630b9297daeafc14550d37afa45f57dae4adad4475/8.6.5/lib/x86_64-linux-ghc-8.6.5/fb-2.0.0-9FsqbWJMwgU8QHDjw79gUA
-Registering library for fb-2.0.0..
+Stack has not been tested with GHC versions above 8.6, and using 8.8.2, this may fail
+Stack has not been tested with Cabal versions above 2.4, but version 3.0.1.0 was found, this may fail
 fb> test (suite: runtests)
 
-Progress 1/2: fb
+
 Production tier: getAppAccessToken
   works and returns a valid app access token
   throws a FacebookException on invalid credentials
+Production tier: setApiVersion
+  Check default apiVersion
+  Change apiVersion
 Production tier: isValid
   returns False on a clearly invalid user access token
   returns False on a clearly invalid app access token
@@ -53,38 +47,41 @@ Production tier: fetchAllNextPages
   seems to work on a public list of comments FAILED [5]
   seems to work on a private list of app insights
 Production tier: createTestUser/removeTestUser/getTestUser
-^[^[  creates and removes a new test user
+  creates and removes a new test user
 Production tier: makeFriendConn
-  creates two new test users, makes them friends and deletes them
+  creates two new test users, makes them friends and deletes them FAILED [6]
 Production tier: getTestUsers
   gets a list of test users
 Beta tier: getAppAccessToken
   works and returns a valid app access token
   throws a FacebookException on invalid credentials
+Beta tier: setApiVersion
+  Check default apiVersion
+  Change apiVersion
 Beta tier: isValid
   returns False on a clearly invalid user access token
   returns False on a clearly invalid app access token
 Beta tier: debugToken
   works on a test user access token
 Beta tier: getObject
-  is able to fetch Facebook's own page FAILED [6]
+  is able to fetch Facebook's own page FAILED [7]
 Beta tier: getPage
-  works for FB Developers FAILED [7]
+  works for FB Developers FAILED [8]
 Beta tier: listSubscriptions
   returns something
 Beta tier: fetchNextPage
-  seems to work on a public list of comments FAILED [8]
-  seems to work on a private list of app insights
-Beta tier: fetchNextPage/fetchPreviousPage
   seems to work on a public list of comments FAILED [9]
   seems to work on a private list of app insights
-Beta tier: fetchAllNextPages
+Beta tier: fetchNextPage/fetchPreviousPage
   seems to work on a public list of comments FAILED [10]
+  seems to work on a private list of app insights
+Beta tier: fetchAllNextPages
+  seems to work on a public list of comments FAILED [11]
   seems to work on a private list of app insights
 Beta tier: createTestUser/removeTestUser/getTestUser
   creates and removes a new test user
 Beta tier: makeFriendConn
-  creates two new test users, makes them friends and deletes them
+  creates two new test users, makes them friends and deletes them FAILED [12]
 Beta tier: getTestUsers
   gets a list of test users
 SimpleType
@@ -177,84 +174,97 @@ makeAppSecretProof
 
 Failures:
 
-  tests/Main.hs:175:5:
+  tests/Main.hs:179:5:
   1) Production tier: getObject is able to fetch Facebook's own page
        uncaught exception: FacebookException
-       FacebookException {fbeType = "invalid_request", fbeMessage = "(#10) To use 'Page Public Content Access', your use of this endpoint must be reviewed and approved by Facebook. To submit this 'Page Public Content Access' feature for review please read our documentation on review}
+       FacebookException {fbeType = "invalid_request", fbeMessage = "(#10) This endpoint requires the 'manage_pages' permission or the 'Page Public Content Access' feature or the 'Page Public Metadata Access' feature. Refer to https://developers.facebook.com/docs/apps/review/login-permissions#manage-pages, https://developers.facebook.com/docs/apps/review/feature#reference-PAGES_ACCESS and https://developers.facebook.com/docs/apps/review/feature#page-public-metadata-access for details."}
 
   To rerun use: --match "/Production tier: getObject/is able to fetch Facebook's own page/"
 
-  tests/Main.hs:188:5:
+  tests/Main.hs:192:5:
   2) Production tier: getPage works for FB Developers
        uncaught exception: FacebookException
-       FacebookException {fbeType = "invalid_request", fbeMessage = "(#10) To use 'Page Public Content Access', your use of this endpoint must be reviewed and approved by Facebook. To submit this 'Page Public Content Access' feature for review please read our documentation on review}
+       FacebookException {fbeType = "invalid_request", fbeMessage = "(#10) This endpoint requires the 'manage_pages' permission or the 'Page Public Content Access' feature or the 'Page Public Metadata Access' feature. Refer to https://developers.facebook.com/docs/apps/review/login-permissions#manage-pages, https://developers.facebook.com/docs/apps/review/feature#reference-PAGES_ACCESS and https://developers.facebook.com/docs/apps/review/feature#page-public-metadata-access for details."}
 
   To rerun use: --match "/Production tier: getPage/works for FB Developers/"
 
-  tests/Main.hs:214:5:
+  tests/Main.hs:218:5:
   3) Production tier: fetchNextPage seems to work on a public list of comments
        uncaught exception: FacebookException
-       FacebookException {fbeType = "invalid_request", fbeMessage = "(#10) To use 'Page Public Content Access', your use of this endpoint must be reviewed and approved by Facebook. To submit this 'Page Public Content Access' feature for review please read our documentation on review}
+       FacebookException {fbeType = "invalid_request", fbeMessage = "(#10) This endpoint requires the 'manage_pages' permission or the 'Page Public Content Access' feature. Refer to https://developers.facebook.com/docs/apps/review/login-permissions#manage-pages and https://developers.facebook.com/docs/apps/review/feature#reference-PAGES_ACCESS for details."}
 
   To rerun use: --match "/Production tier: fetchNextPage/seems to work on a public list of comments/"
 
-  tests/Main.hs:240:5:
+  tests/Main.hs:244:5:
   4) Production tier: fetchNextPage/fetchPreviousPage seems to work on a public list of comments
        uncaught exception: FacebookException
-       FacebookException {fbeType = "invalid_request", fbeMessage = "(#10) To use 'Page Public Content Access', your use of this endpoint must be reviewed and approved by Facebook. To submit this 'Page Public Content Access' feature for review please read our documentation on review}
+       FacebookException {fbeType = "invalid_request", fbeMessage = "(#10) This endpoint requires the 'manage_pages' permission or the 'Page Public Content Access' feature. Refer to https://developers.facebook.com/docs/apps/review/login-permissions#manage-pages and https://developers.facebook.com/docs/apps/review/feature#reference-PAGES_ACCESS for details."}
 
   To rerun use: --match "/Production tier: fetchNextPage/fetchPreviousPage/seems to work on a public list of comments/"
 
-  tests/Main.hs:264:5:
+  tests/Main.hs:268:5:
   5) Production tier: fetchAllNextPages seems to work on a public list of comments
        uncaught exception: FacebookException
-       FacebookException {fbeType = "invalid_request", fbeMessage = "(#10) To use 'Page Public Content Access', your use of this endpoint must be reviewed and approved by Facebook. To submit this 'Page Public Content Access' feature for review please read our documentation on review}
+       FacebookException {fbeType = "invalid_request", fbeMessage = "(#10) This endpoint requires the 'manage_pages' permission or the 'Page Public Content Access' feature. Refer to https://developers.facebook.com/docs/apps/review/login-permissions#manage-pages and https://developers.facebook.com/docs/apps/review/feature#reference-PAGES_ACCESS for details."}
 
   To rerun use: --match "/Production tier: fetchAllNextPages/seems to work on a public list of comments/"
 
-  tests/Main.hs:175:5:
-  6) Beta tier: getObject is able to fetch Facebook's own page
+  tests/Main.hs:320:5:
+  6) Production tier: makeFriendConn creates two new test users, makes them friends and deletes them
        uncaught exception: FacebookException
-       FacebookException {fbeType = "invalid_request", fbeMessage = "(#10) To use 'Page Public Content Access', your use of this endpoint must be reviewed and approved by Facebook. To submit this 'Page Public Content Access' feature for review please read our documentation on review}
+       FacebookException {fbeType = "invalid_request", fbeMessage = "(#33) This object does not exist or does not support this action"}
+
+  To rerun use: --match "/Production tier: makeFriendConn/creates two new test users, makes them friends and deletes them/"
+
+  tests/Main.hs:179:5:
+  7) Beta tier: getObject is able to fetch Facebook's own page
+       uncaught exception: FacebookException
+       FacebookException {fbeType = "invalid_request", fbeMessage = "(#10) This endpoint requires the 'manage_pages' permission or the 'Page Public Content Access' feature or the 'Page Public Metadata Access' feature. Refer to https://developers.facebook.com/docs/apps/review/login-permissions#manage-pages, https://developers.facebook.com/docs/apps/review/feature#reference-PAGES_ACCESS and https://developers.facebook.com/docs/apps/review/feature#page-public-metadata-access for details."}
 
   To rerun use: --match "/Beta tier: getObject/is able to fetch Facebook's own page/"
 
-  tests/Main.hs:188:5:
-  7) Beta tier: getPage works for FB Developers
+  tests/Main.hs:192:5:
+  8) Beta tier: getPage works for FB Developers
        uncaught exception: FacebookException
-       FacebookException {fbeType = "invalid_request", fbeMessage = "(#10) To use 'Page Public Content Access', your use of this endpoint must be reviewed and approved by Facebook. To submit this 'Page Public Content Access' feature for review please read our documentation on review}
+       FacebookException {fbeType = "invalid_request", fbeMessage = "(#10) This endpoint requires the 'manage_pages' permission or the 'Page Public Content Access' feature or the 'Page Public Metadata Access' feature. Refer to https://developers.facebook.com/docs/apps/review/login-permissions#manage-pages, https://developers.facebook.com/docs/apps/review/feature#reference-PAGES_ACCESS and https://developers.facebook.com/docs/apps/review/feature#page-public-metadata-access for details."}
 
   To rerun use: --match "/Beta tier: getPage/works for FB Developers/"
 
-  tests/Main.hs:214:5:
-  8) Beta tier: fetchNextPage seems to work on a public list of comments
+  tests/Main.hs:218:5:
+  9) Beta tier: fetchNextPage seems to work on a public list of comments
        uncaught exception: FacebookException
-       FacebookException {fbeType = "invalid_request", fbeMessage = "(#10) To use 'Page Public Content Access', your use of this endpoint must be reviewed and approved by Facebook. To submit this 'Page Public Content Access' feature for review please read our documentation on review}
+       FacebookException {fbeType = "invalid_request", fbeMessage = "(#10) This endpoint requires the 'manage_pages' permission or the 'Page Public Content Access' feature. Refer to https://developers.facebook.com/docs/apps/review/login-permissions#manage-pages and https://developers.facebook.com/docs/apps/review/feature#reference-PAGES_ACCESS for details."}
 
   To rerun use: --match "/Beta tier: fetchNextPage/seems to work on a public list of comments/"
 
-  tests/Main.hs:240:5:
-  9) Beta tier: fetchNextPage/fetchPreviousPage seems to work on a public list of comments
+  tests/Main.hs:244:5:
+  10) Beta tier: fetchNextPage/fetchPreviousPage seems to work on a public list of comments
        uncaught exception: FacebookException
-       FacebookException {fbeType = "invalid_request", fbeMessage = "(#10) To use 'Page Public Content Access', your use of this endpoint must be reviewed and approved by Facebook. To submit this 'Page Public Content Access' feature for review please read our documentation on review}
+       FacebookException {fbeType = "invalid_request", fbeMessage = "(#10) This endpoint requires the 'manage_pages' permission or the 'Page Public Content Access' feature. Refer to https://developers.facebook.com/docs/apps/review/login-permissions#manage-pages and https://developers.facebook.com/docs/apps/review/feature#reference-PAGES_ACCESS for details."}
 
   To rerun use: --match "/Beta tier: fetchNextPage/fetchPreviousPage/seems to work on a public list of comments/"
 
-  tests/Main.hs:264:5:
-  10) Beta tier: fetchAllNextPages seems to work on a public list of comments
+  tests/Main.hs:268:5:
+  11) Beta tier: fetchAllNextPages seems to work on a public list of comments
        uncaught exception: FacebookException
-       FacebookException {fbeType = "invalid_request", fbeMessage = "(#10) To use 'Page Public Content Access', your use of this endpoint must be reviewed and approved by Facebook. To submit this 'Page Public Content Access' feature for review please read our documentation on review}
+       FacebookException {fbeType = "invalid_request", fbeMessage = "(#10) This endpoint requires the 'manage_pages' permission or the 'Page Public Content Access' feature. Refer to https://developers.facebook.com/docs/apps/review/login-permissions#manage-pages and https://developers.facebook.com/docs/apps/review/feature#reference-PAGES_ACCESS for details."}
 
   To rerun use: --match "/Beta tier: fetchAllNextPages/seems to work on a public list of comments/"
 
-Randomized with seed 1487051425
+  tests/Main.hs:320:5:
+  12) Beta tier: makeFriendConn creates two new test users, makes them friends and deletes them
+       uncaught exception: FacebookException
+       FacebookException {fbeType = "invalid_request", fbeMessage = "(#33) This object does not exist or does not support this action"}
 
-Finished in 226.3622 seconds
-85 examples, 10 failures
+  To rerun use: --match "/Beta tier: makeFriendConn/creates two new test users, makes them friends and deletes them/"
+
+Randomized with seed 1545350971
+
+Finished in 99.2006 seconds
+89 examples, 12 failures
 
 fb> Test suite runtests failed
-Completed 2 action(s).
-Test suite failure for package fb-2.0.0
+Test suite failure for package fb-2.1.0
     runtests:  exited with: ExitFailure 1
 Logs printed to console
 ```
