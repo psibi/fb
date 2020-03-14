@@ -1,10 +1,9 @@
 fb
 --
 
-[![Build Status](https://travis-ci.org/psibi/fb.svg?branch=master)](https://travis-ci.org/psibi/fb)
+[![Build Status](https://dev.azure.com/psibi2000/Haskell%20Projects/_apis/build/status/psibi.fb?branchName=master)](https://dev.azure.com/psibi2000/Haskell%20Projects/_build/latest?definitionId=16&branchName=master)
 
 Haskell bindings to Facebook's API
-
 
 ## Example code to get User Access token
 
