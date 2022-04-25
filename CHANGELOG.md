@@ -1,3 +1,7 @@
+# master
+
+* Add support for Aeson v2+.
+
 # Version 2.1.0
 
 * Same release as 2.0.1 bound follows PVP properly

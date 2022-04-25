@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverloadedStrings #-}
 
@@ -16,7 +17,12 @@ import Data.Time.Clock.POSIX (posixSecondsToUTCTime)
 
 import qualified Control.Monad.Trans.Resource as R
 import qualified Data.Aeson as A
-import qualified Data.HashMap.Strict as HMS
+#if MIN_VERSION_aeson(2,0,0)
+import qualified Data.Aeson.KeyMap as Keys
+#else
+import qualified Data.HashMap.Strict as Keys
+#endif
+
 
 import Facebook.Types
 import Facebook.Monad
@@ -66,7 +72,7 @@ newtype FQLList a = FQLList
 
 instance A.FromJSON a =>
          A.FromJSON (FQLList a) where
-  parseJSON (A.Object o) = FQLList <$> mapM A.parseJSON (HMS.elems o)
+  parseJSON (A.Object o) = FQLList <$> mapM A.parseJSON (Keys.elems o)
   parseJSON v = FQLList <$> A.parseJSON v
 
 -- | @newtype@ wrapper around any object that works around FQL's
