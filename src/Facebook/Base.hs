@@ -25,6 +25,9 @@ import Control.Monad.Trans.Class (MonadTrans)
 import qualified Control.Monad.Trans.Resource as R
 import qualified Data.Aeson as A
 import qualified Data.Attoparsec.ByteString.Char8 as AT
+#if MIN_VERSION_aeson(2,2,0)
+import qualified Data.Aeson.Parser.Internal as AesonParserInternal
+#endif
 import qualified Data.ByteString as B
 import qualified Data.Conduit as C
 import Data.Conduit ((.|))
@@ -114,7 +117,12 @@ asJsonHelper response = do
   _ <- liftIO $ printf "asJsonHelper: %s\n" (show bs)
   val <- either (fail . ("asJsonHelper: A.decode returned " ++)) return (A.eitherDecode bs)
 #else
+  -- aeson-2.2 moved this to new package `attoparsec-aeson`
+#if MIN_VERSION_aeson(2,2,0)
+  val <- C.runConduit $ (H.responseBody response) .| C.sinkParser AesonParserInternal.json'
+#else
   val <- C.runConduit $ (H.responseBody response) .| C.sinkParser A.json'
+#endif
 #endif
   case A.fromJSON val of
     A.Success r -> return r

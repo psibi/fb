@@ -1,5 +1,5 @@
 name: fb
-version: '2.1.1.1'
+version: '2.1.1.2'
 synopsis: Bindings to Facebook's API.
 description: ! 'This package exports bindings to Facebook''s APIs (see
 
@@ -54,7 +54,6 @@ library:
   - attoparsec >=0.10.4
   - unordered-containers
   - data-default
-  - aeson >=0.8.0.2
   - time >=1.4
   - cryptonite
   - memory
@@ -67,6 +66,14 @@ library:
   when:
   - condition: flag(debug)
     cpp-options: -DDEBUG
+  - condition: flag(pre-aeson-2-2-compat)
+    then:
+      build-depends:
+      - aeson >=0.8.0.2
+    else:
+      build-depends:
+      - attoparsec-aeson >=2.1.0.0
+      - aeson >=2.2.0.0
 tests:
   runtests:
     main: Main.hs
@@ -94,6 +101,10 @@ tests:
 flags:
   debug:
     description: Print debugging info.
+    manual: false
+    default: false
+  pre-aeson-2-2-compat:
+    description: Build with aeson < 2.2 where the attoparsec-aeson package didn't exist.
     manual: false
     default: false
 stability: Experimental

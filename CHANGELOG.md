@@ -1,3 +1,7 @@
+# Version 2.1.1.2
+
+* Add support for Aeson v2.2+.
+
 # Version 2.1.1.1
 
 * Add support for Aeson v2+.

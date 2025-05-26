@@ -1,4 +1,7 @@
-resolver: lts-15.2
+resolver: lts-23.23
+# To test with older aeson versions. use e.g. the below instead with
+#     stack build --flag fb:pre-aeson-2-2-compat
+#resolver: lts-15.2
 
 packages:
 - '.'
